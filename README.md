@@ -116,14 +116,14 @@ Use the mnist.py that is in this repo.  It is the moral equivalent of this [tens
     python mnist.py
     
 
-It should spew 10 lines or so of boilerplate, download the MNIST dataset, and then start spitting out lines like this:
+It should spew 10 lines or so of boilerplate about firing up the GPU, and downloading the MNIST dataset.  It will then get down to business and start actually training with output like this:
 
     step 0, training accuracy 0.04
     step 100, training accuracy 0.86
     step 200, training accuracy 0.9
     step 300, training accuracy 0.86
 
-The lines should print every 1-2 seconds.  If you give it 5 minutes to train (it needs to get to step 20000) it will print out that it eached 99.2% accurace.  Pretty awesome for a <100 line script!  To make sure you are getting the full power of the GPU, try running the script on the cpu (not gpu):
+The lines should print every 1-2 seconds.  If you give it 5 minutes to train (it needs to get to step 20000) it will print out `test accuracy 0.9924` or so.  Pretty awesome for a <100 line script!  To make sure you are getting the full power of the GPU, try running the script on the cpu (not gpu):
 
     python mnist.py --force-cpu
     
