@@ -32,7 +32,7 @@ google "cuda download" and find the link.  You'll want linux, x86_64, ubuntu, 14
     cd nvidia_installers
     sudo ./NVIDIA-Linux-x86_64-342.39.run 
 
-The driver will likely claim there is a conflict with nouveau, and offer to write a file to fix it.  It will then tell you to reboot and the installer will exit.  BZefore rebooting update the init ramdisk:
+The driver will likely claim there is a conflict with nouveau, and offer to write a file to fix it.  Let it.  It will then tell you to reboot and the installer will exit.  BZefore rebooting update the init ramdisk:
 
     sudo update-initramfs -u
     sudo reboot
