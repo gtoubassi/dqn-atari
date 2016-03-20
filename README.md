@@ -74,9 +74,7 @@ Answer the installer questions with the defaults.  I make no warranties as to wh
     echo “export JAVA_HOME=/usr/lib/jvm/java-8-oracle” >> ~/.bashrc
     . ~/.bashrc
 
-Now on to bazel:
-
-As of this writing we need bazel 0.1.4 exactly, which is a bit stale.  As of your reading, maybe its different!  Google it if this doesn't work.
+Now on to bazel.  As of this writing we need bazel 0.1.4 exactly, which is a bit stale.  As of your reading, maybe its different!  Google it if this doesn't work.
 
     cd
     wget https://github.com/bazelbuild/bazel/releases/download/0.1.4/bazel-0.1.4-installer-linux-x86_64.sh
@@ -110,6 +108,25 @@ Now build and install (this will take 10-20 minutes)
 
 ### Test with the MNIST tutorial
 
-Use the mnist.py with this package:
+Use the mnist.py that is in this repo.  It is the moral equivalent of this [tensorflow tutorial](https://www.tensorflow.org/versions/r0.7/tutorials/mnist/pros/index.html).
 
+    cd
+    git clone https://github.com/gtoubassi/TensorFlowOnAWSwithGPU.git
+    cd TensorFlowOnAWSwithGPU.git
+    python mnist.py
+    
+
+It should spew 10 lines or so of boilerplate, download the MNIST dataset, and then start spitting out lines like this:
+
+    step 0, training accuracy 0.04
+    step 100, training accuracy 0.86
+    step 200, training accuracy 0.9
+    step 300, training accuracy 0.86
+
+The lines should print every 1-2 seconds.  If you give it 5 minutes to train (it needs to get to step 20000) it will print out that it eached 99.2% accurace.  Pretty awesome for a <100 line script!  To make sure you are getting the full power of the GPU, try running the script on the cpu (not gpu):
+
+    python mnist.py --force-cpu
+    
+Although it will spew the same business about firing up the GPU the actual computations are instructed to be on the cpu, so you will see each batch printed out every 15 seconds instead of 1.5 seconds.  So about 10x faster (kinda surprised its not even more).
+ 
 
