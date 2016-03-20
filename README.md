@@ -8,7 +8,7 @@ The following are notes for setting up an AWS instance with GPU support for Tens
 
 ### Get an AWS GPU instance
 
-Here is what I used: `g2.2xlarge` with ubuntu AMI `ubuntu-trusty-14.04-amd64-server-20160114.5 (ami-06116566)`.  During instance setup I increased the root partition from gGb to 16gb.  You will need this to build (or you can build on the /mnt ebs partition).
+Here is what I used: `g2.2xlarge` with ubuntu AMI `ubuntu-trusty-14.04-amd64-server-20160114.5 (ami-06116566)`.  During instance setup I increased the root partition from 8gb to 16gb.  You will need this to build (or you can build on the /mnt ebs partition).
 
 `ssh` in and get ready to rumble!
 
