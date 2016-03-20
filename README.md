@@ -86,7 +86,7 @@ Now on to bazel.  As of this writing we need bazel 0.1.4 exactly, which is a bit
     git clone --recurse-submodules https://github.com/tensorflow/tensorflow
     cd tensorflow
 
-The key thing to building TensorFlow is that we need to build with GPU support, and we need to build for "compute capability for 3.0".  Apparently the default GPU version is for "compute capability for 3.5" and up.  So configure as follows:
+The key thing to building TensorFlow is that we need to build with GPU support, and we need to build for "compute capability for 3.0", which is slightly older and is compatible with the generation of GPUs AWS currently has.  If you google there are lots of people asking for this, so support was unofficially added.  So configure as follows:
 
     TF_UNOFFICIAL_SETTING=1 ./configure
 
