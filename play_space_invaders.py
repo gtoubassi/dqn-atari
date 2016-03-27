@@ -2,7 +2,11 @@
 #
 import sys
 import numpy as np
-from random import randrange
+import state as gs
+import random
+import replay
+import time
+import dqn
 from ale_python_interface import ALEInterface
 
 if len(sys.argv) < 2:
@@ -12,64 +16,81 @@ if len(sys.argv) < 2:
 ale = ALEInterface()
 
 # Get & Set the desired settings
-ale.setInt(b'random_seed', 123)
 
-# Set USE_SDL to true to display the screen. ALE must be compilied
-# with SDL enabled for this to work. On OSX, pygame init is used to
-# proxy-call SDL_main.
-USE_SDL = False
-if USE_SDL:
-  if sys.platform == 'darwin':
-    import pygame
-    pygame.init()
-    ale.setBool('sound', False) # Sound doesn't work on OSX
-  elif sys.platform.startswith('linux'):
-    ale.setBool('sound', True)
-  ale.setBool('display_screen', True)
+ale.setInt(b'random_seed', 123456)
+random.seed(123456)
+
+# This is to deal with the issue mentioned in the paper for space invaders
+# where bullets are only drawn on some frames (?? is it a net win)
+ale.setBool(b'color_averaging', True)
 
 # Load the ROM file
 rom_file = str.encode(sys.argv[1])
 ale.loadROM(rom_file)
 
-# Get the list of legal actions
-legal_actions = ale.getLegalActionSet()
-
-screen_width, screen_height = ale.getScreenDims();
-screen_data = np.empty((screen_height, screen_width, 1), dtype=np.uint8)
+screenWidth, screenHeight = ale.getScreenDims();
+screenData = np.empty((screenHeight, screenWidth, 1), dtype=np.uint8)
+print('%d x %d' % (screenWidth, screenHeight))
+actionSet = ale.getMinimalActionSet();
+dqn = dqn.DeepQNetwork(screenWidth, screenHeight, actionSet) # (??) Can replace actionSet here with len(actionSet)
+replayMemory = replay.ReplayMemory(20000)
+trainingFrequency = 4 # train every step
+minObservationFrames = 1000
 
 # Play 10 episodes
 for episode in range(10):
-  total_reward = 0
-  while not ale.game_over():
-    a = legal_actions[randrange(len(legal_actions))]
-    # Apply an action and get the resulting reward
-    previous_lives = ale.lives()
-    reward = ale.act(a);
-    if ale.lives() < previous_lives or reward < 0:
-        reward = -1
-    elif reward > 1:
-        reward = 1
-
-    # Reward is now -1, 0, 1        
-    #print('reward %d lives %d' % (reward, ale.lives()))
-    total_reward += reward
     
-    if (False and ale.getFrameNumber() % 100 == 0):
-        ale.getScreenGrayscale(screen_data)
-        print('screen:')
-        for y in range(screen_height // 5):
-            for x in range(screen_width // 2):
-                pixel_sum = 0
-                max_pixel = 0
-                for yblock in range(5):
-                    for xblock in range(2):
-                        if screen_data[y * 5 + yblock, x * 2 + xblock] > max_pixel:
-                            max_pixel = screen_data[y * 5 + yblock, x * 2 + xblock]
-                        pixel_sum = np.int32(screen_data[y * 5 + yblock, x * 2 + xblock])
-                pixel = pixel_sum // 10
-                sys.stdout.write('#' if max_pixel > 50 else ' ')
-            print('')
+    gameScore = 0
+    oldState = None
+    ale.getScreenGrayscale(screenData)    
+    state = gs.State().stateByAddingScreen(screenData)
+    startTime = time.time();
+
+    while not ale.game_over():
+      
+        action = dqn.chooseAction(state)
+
+        # Apply an action and get the resulting reward
+        previous_lives = ale.lives()
+        reward = ale.act(actionSet[action]);
+        gameScore += reward
+        
+        # Convert reward to -1, 0, +1
+        if ale.lives() < previous_lives or reward < 0:
+            reward = -1
+        elif reward > 1:
+            reward = 1
+        
+        ale.getScreenGrayscale(screenData)    
+        oldState = state
+        state = state.stateByAddingScreen(screenData)
+        replayMemory.addSample(replay.Sample(oldState, action, reward, state, ale.game_over()))
+        
+        # Train every trainingFrequency steps
+        if ale.getFrameNumber() > minObservationFrames and ale.getFrameNumber() % trainingFrequency == 0:
+            # (??) batch size
+            batch = replayMemory.drawBatch(32)
+            dqn.train(batch)
+
+    episodeTime = time.time() - startTime
+    print('Episode %d ended with score: %d (%d frames in %fs for %d fps)' % (episode, gameScore, ale.getEpisodeFrameNumber(), episodeTime, ale.getEpisodeFrameNumber() / episodeTime))
+    ale.reset_game()
+
+
+def printScreen(screenData, screenWidth, screenHeight):
+    print('screen:')
+    for y in range(screenHeight // 5):
+        for x in range(screenWidth // 2):
+            pixelSum = 0
+            maxPixel = 0
+            for yblock in range(5):
+                for xblock in range(2):
+                    if screenData[y * 5 + yblock, x * 2 + xblock] > maxPixel:
+                        max_pixel = screenData[y * 5 + yblock, x * 2 + xblock]
+                    pixelSum = np.int32(screenData[y * 5 + yblock, x * 2 + xblock])
+            pixel = pixelSum // 10
+            sys.stdout.write('#' if maxPixel > 50 else ' ')
         print('')
-              
-  print('Episode %d ended with score: %d' % (episode, total_reward))
-  ale.reset_game()
+    print('')
+          
+    
