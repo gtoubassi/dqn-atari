@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import state as gs
 import random
+import os
 import replay
 import time
 import dqn
@@ -34,17 +35,19 @@ print('%d x %d' % (screenWidth, screenHeight))
 actionSet = ale.getMinimalActionSet();
 dqn = dqn.DeepQNetwork(screenWidth, screenHeight, actionSet) # (??) Can replace actionSet here with len(actionSet)
 replayMemory = replay.ReplayMemory(20000)
-trainingFrequency = 4 # train every step
+trainingFrequency = 4 # train every 4 frames
 minObservationFrames = 1000
+screenCaptureFrequency = 50
+gameCount = 0
 
 # Play 10 episodes
-for episode in range(10):
+for episode in range(100000):
     
     gameScore = 0
     oldState = None
     ale.getScreenGrayscale(screenData)    
     state = gs.State().stateByAddingScreen(screenData)
-    startTime = time.time();
+    startTime = time.time()
 
     while not ale.game_over():
       
@@ -52,7 +55,7 @@ for episode in range(10):
 
         # Apply an action and get the resulting reward
         previous_lives = ale.lives()
-        reward = ale.act(actionSet[action]);
+        reward = ale.act(actionSet[action])
         gameScore += reward
         
         # Convert reward to -1, 0, +1
@@ -71,10 +74,20 @@ for episode in range(10):
             # (??) batch size
             batch = replayMemory.drawBatch(32)
             dqn.train(batch)
+        
+        if gameCount % screenCaptureFrequency == 0:
+            dir = 'screen_cap/game-%06d' % (gameCount)
+            if ale.getEpisodeFrameNumber() == 1:
+                os.makedirs(dir)
+            ale.saveScreenPNG(dir + '/frame-%06d.png' % (ale.getEpisodeFrameNumber()))
+                
+            
+        
 
     episodeTime = time.time() - startTime
     print('Episode %d ended with score: %d (%d frames in %fs for %d fps)' % (episode, gameScore, ale.getEpisodeFrameNumber(), episodeTime, ale.getEpisodeFrameNumber() / episodeTime))
     ale.reset_game()
+    gameCount += 1
 
 
 def printScreen(screenData, screenWidth, screenHeight):

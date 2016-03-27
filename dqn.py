@@ -13,6 +13,7 @@ class DeepQNetwork:
         self.height = height
         self.actionCount = 0
         self.lastAction = 0
+        self.batchCount = 0
         
         tf.set_random_seed(123456)
         
@@ -68,6 +69,8 @@ class DeepQNetwork:
           # (??) learning rate
           self.train_step = tf.train.AdamOptimizer(1e-6).minimize(self.loss)
 
+          self.saver = tf.train.Saver(max_to_keep=25)
+
           # Initialize variables
           self.sess.run(tf.initialize_all_variables())
 
@@ -95,6 +98,8 @@ class DeepQNetwork:
         
     def train(self, batch):
 
+        self.batchCount += 1
+        
         x2 = [b.state2.screens for b in batch]
         y2 = self.y.eval(feed_dict={self.x: x2})
         
@@ -114,3 +119,7 @@ class DeepQNetwork:
             self.a: a,
             self.y_: y_
         })
+        
+        if self.batchCount % 1000 == 0:
+            self.saver.save(self.sess, 'saved_networks/model', global_step=self.batchCount)
+
