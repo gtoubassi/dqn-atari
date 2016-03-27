@@ -8,7 +8,7 @@ The following are notes for setting up an AWS instance with GPU support for Tens
 
 ### Get an AWS GPU instance
 
-Here is what I used: `g2.2xlarge` with ubuntu AMI `ubuntu-trusty-14.04-amd64-server-20160114.5 (ami-06116566)`.  During instance setup I increased the root partition from gGb to 16gb.  You will need this to build (or you can build on the /mnt ebs partition).
+Here is what I used: `g2.2xlarge` with ubuntu AMI `ubuntu-trusty-14.04-amd64-server-20160114.5 (ami-06116566)`.  During instance setup I increased the root partition from 8gb to 16gb.  You will need this to build (or you can build on the /mnt ebs partition).
 
 `ssh` in and get ready to rumble!
 
@@ -32,7 +32,7 @@ google "cuda download" and find the link.  You'll want linux, x86_64, ubuntu, 14
     cd nvidia_installers
     sudo ./NVIDIA-Linux-x86_64-342.39.run 
 
-The driver will likely claim there is a conflict with nouveau, and offer to write a file to fix it.  It will then tell you to reboot and the installer will exit.  BZefore rebooting update the init ramdisk:
+The driver will likely claim there is a conflict with nouveau, and offer to write a file to fix it.  Let it.  It will then tell you to reboot and the installer will exit.  Before rebooting update the init ramdisk:
 
     sudo update-initramfs -u
     sudo reboot
@@ -86,7 +86,7 @@ Now on to bazel.  As of this writing we need bazel 0.1.4 exactly, which is a bit
     git clone --recurse-submodules https://github.com/tensorflow/tensorflow
     cd tensorflow
 
-The key thing to building TensorFlow is that we need to build with GPU support, and we need to build for "compute capability for 3.0".  Apparently the default GPU version is for "compute capability for 3.5" and up.  So configure as follows:
+The key thing to building TensorFlow is that we need to build with GPU support, and we need to build for "compute capability for 3.0", which is slightly older and is compatible with the generation of GPUs AWS currently has.  If you google there are lots of people asking for this, so support was unofficially added.  So configure as follows:
 
     TF_UNOFFICIAL_SETTING=1 ./configure
 
@@ -116,14 +116,14 @@ Use the mnist.py that is in this repo.  It is the moral equivalent of this [tens
     python mnist.py
     
 
-It should spew 10 lines or so of boilerplate, download the MNIST dataset, and then start spitting out lines like this:
+It should spew 10 lines or so of boilerplate about firing up the GPU, and downloading the MNIST dataset.  It will then get down to business and start actually training with output like this:
 
     step 0, training accuracy 0.04
     step 100, training accuracy 0.86
     step 200, training accuracy 0.9
     step 300, training accuracy 0.86
 
-The lines should print every 1-2 seconds.  If you give it 5 minutes to train (it needs to get to step 20000) it will print out that it eached 99.2% accurace.  Pretty awesome for a <100 line script!  To make sure you are getting the full power of the GPU, try running the script on the cpu (not gpu):
+The lines should print every 1-2 seconds.  If you give it 5 minutes to train (it needs to get to step 20000) it will print out `test accuracy 0.9924` or so.  Pretty awesome for a <100 line script!  To make sure you are getting the full power of the GPU, try running the script on the cpu (not gpu):
 
     python mnist.py --force-cpu
     
