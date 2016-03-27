@@ -80,9 +80,6 @@ for episode in range(100000):
             if ale.getEpisodeFrameNumber() == 1:
                 os.makedirs(dir)
             ale.saveScreenPNG(dir + '/frame-%06d.png' % (ale.getEpisodeFrameNumber()))
-                
-            
-        
 
     episodeTime = time.time() - startTime
     print('Episode %d ended with score: %d (%d frames in %fs for %d fps)' % (episode, gameScore, ale.getEpisodeFrameNumber(), episodeTime, ale.getEpisodeFrameNumber() / episodeTime))

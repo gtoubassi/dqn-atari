@@ -4,7 +4,7 @@ import scipy.ndimage as ndimage
 class State:
 
     def stateByAddingScreen(self, screen):
-        screen = ndimage.zoom(screen, 0.5)
+        screen = ndimage.zoom(screen, (0.5, 0.5, 1.0))
         newState = State()
         # Consider resizing here vs in TF to save memory (??) and be able to store more replaymemory
         if hasattr(self, 'screen'):
