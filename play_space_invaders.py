@@ -33,12 +33,17 @@ screenWidth, screenHeight = ale.getScreenDims();
 screenData = np.empty((screenHeight, screenWidth, 1), dtype=np.uint8)
 print('%d x %d' % (screenWidth, screenHeight))
 actionSet = ale.getMinimalActionSet();
-dqn = dqn.DeepQNetwork(screenWidth, screenHeight, actionSet) # (??) Can replace actionSet here with len(actionSet)
+
+baseOutputDir = 'game-out-' + time.strftime("%Y-%m-%d-%H-%M-%S")
+os.makedirs(baseOutputDir)
+
+dqn = dqn.DeepQNetwork(screenWidth, screenHeight, actionSet, baseOutputDir) # (??) Can replace actionSet here with len(actionSet)
 replayMemory = replay.ReplayMemory(20000)
-trainingFrequency = 4 # train every 4 frames
+frameSampleRate = 4 # train every 4 frames
 minObservationFrames = 1000
-screenCaptureFrequency = 50
+screenCaptureFrequency = 100
 gameCount = 0
+
 
 # Play 10 episodes
 for episode in range(100000):
@@ -64,20 +69,20 @@ for episode in range(100000):
         elif reward > 1:
             reward = 1
         
-        ale.getScreenGrayscale(screenData)    
-        oldState = state
-        state = state.stateByAddingScreen(screenData)
-        replayMemory.addSample(replay.Sample(oldState, action, reward, state, ale.game_over()))
-        
-        # Train every trainingFrequency steps
-        if ale.getFrameNumber() > minObservationFrames and ale.getFrameNumber() % trainingFrequency == 0:
-            # (??) batch size
-            batch = replayMemory.drawBatch(32)
-            dqn.train(batch)
+        if ale.getFrameNumber() % frameSampleRate == 0:
+            ale.getScreenGrayscale(screenData)    
+            oldState = state
+            state = state.stateByAddingScreen(screenData)
+            replayMemory.addSample(replay.Sample(oldState, action, reward, state, ale.game_over()))
+            
+            if ale.getFrameNumber() > minObservationFrames and ale.getFrameNumber() % frameSampleRate == 0:
+                # (??) batch size
+                batch = replayMemory.drawBatch(32)
+                dqn.train(batch)
         
         if gameCount % screenCaptureFrequency == 0:
-            dir = 'screen_cap/game-%06d' % (gameCount)
-            if ale.getEpisodeFrameNumber() == 1:
+            dir = baseOutputDir + '/screen_cap/game-%06d' % (gameCount)
+            if not os.path.isdir(dir):
                 os.makedirs(dir)
             ale.saveScreenPNG(dir + '/frame-%06d.png' % (ale.getEpisodeFrameNumber()))
 

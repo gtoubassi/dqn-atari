@@ -1,19 +1,22 @@
 import state
 import numpy as np
 import random
+import os
 import tensorflow as tf
 
 # (??)
 gamma = .99
 
 class DeepQNetwork:
-    def __init__(self, width, height, actions):
+    def __init__(self, width, height, actions, baseDir):
         self.actions = actions
         self.width = width
         self.height = height
+        self.baseDir = baseDir
         self.actionCount = 0
         self.lastAction = 0
         self.batchCount = 0
+        os.makedirs
         
         tf.set_random_seed(123456)
         
@@ -121,5 +124,8 @@ class DeepQNetwork:
         })
         
         if self.batchCount % 1000 == 0:
-            self.saver.save(self.sess, 'saved_networks/model', global_step=self.batchCount)
+            dir = self.baseDir + 'models'
+            if not os.path.isdir(dir):
+                os.makedirs(dir)
+            self.saver.save(self.sess, dir + '/model', global_step=self.batchCount)
 
