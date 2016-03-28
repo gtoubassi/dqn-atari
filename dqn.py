@@ -17,7 +17,7 @@ class DeepQNetwork:
         
         tf.set_random_seed(123456)
         
-        with tf.device('/cpu:0'):
+        with tf.device(None):
           self.sess = tf.InteractiveSession()
 
           # First layer takes a screen, and shrinks by 2x

@@ -20,7 +20,7 @@ def max_pool_2x2(x):
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
 
-device = '/gpu:0'
+device = None
 if len(sys.argv) == 2 and sys.argv[1] == '--force-cpu':
   device = '/cpu:0'
 
