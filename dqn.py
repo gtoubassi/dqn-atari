@@ -124,7 +124,7 @@ class DeepQNetwork:
         })
         
         if self.batchCount % 1000 == 0:
-            dir = self.baseDir + 'models'
+            dir = self.baseDir + '/models'
             if not os.path.isdir(dir):
                 os.makedirs(dir)
             self.saver.save(self.sess, dir + '/model', global_step=self.batchCount)
