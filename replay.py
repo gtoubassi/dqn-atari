@@ -19,11 +19,12 @@ class ReplayMemory:
     def numSamples():
         return len(self.samples)
 
-    # (??) Per dqn paper only keep last N samples for memory purposes
+    # ():) Per dqn paper only keep last N samples for memory purposes
     def addSample(self, sample):
         self.samples.append(sample)
         if len(self.samples) > self.maxSamples * 1.05:
-            self.samples = self.samples[int(.05 * self.maxSamples):]
+            len_before = len(self.samples)
+            self.samples = self.samples[(len(self.samples) - self.maxSamples):]
     
     def drawBatch(self, batchSize):
         if batchSize > len(self.samples):

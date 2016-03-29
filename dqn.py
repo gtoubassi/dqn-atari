@@ -80,7 +80,7 @@ class DeepQNetwork:
     def chooseAction(self, state):
         self.actionCount += 1
         
-        # Only select actio s every 4th frame per dqn paper (??)
+        # Only select actions every 4th frame per dqn paper (??)
         
         if self.actionCount % 4 == 0:
             # e-greedy selection
