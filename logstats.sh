@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo -n "Number of episodes:      "
+grep Episode $1 | awk '{print $2}' | tail -1
+
 echo -n "Average score first 50:  "
 grep Episode $1 | head -50 | awk '{print $6}' | awk '{SUM=SUM+$1;COUNT=COUNT+1} END{print SUM/COUNT}'
 
