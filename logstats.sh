@@ -24,6 +24,10 @@ grep Episode $1 | head -500 | awk '{print $6}' | awk '{SUM=SUM+$1;COUNT=COUNT+1}
 echo -n "Average score last 500:  "
 grep Episode $1 | tail -500 | awk '{print $6}' | awk '{SUM=SUM+$1;COUNT=COUNT+1} END{print SUM/COUNT}'
 
+echo -n "Average score for ALL:  "
+grep Episode $1 | awk '{print $6}' | awk '{SUM=SUM+$1;COUNT=COUNT+1} END{print SUM/COUNT}'
+
+echo
 echo "Best scores ever:"
 grep Episode $1 | awk '{print $6}' | sort -n | tail -5 
 
