@@ -8,15 +8,17 @@ import tensorflow as tf
 gamma = .99
 
 class DeepQNetwork:
-    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile):
+    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency):
         self.numActions = numActions
         self.width = width
         self.height = height
         self.baseDir = baseDir
+        self.saveModelFrequency = saveModelFrequency
         self.actionCount = 0
         self.lastAction = 0
         self.batchCount = 0
-        os.makedirs
+        self.annealingPeriod = 1e6 if modelFile is None else 0
+
         
         tf.set_random_seed(123456)
         
@@ -90,7 +92,7 @@ class DeepQNetwork:
             # e-greedy selection
             # Per dqn paper we anneal epsilon from 1 to .1 over the first 1e6 frames and
             # then .1 thereafter (??)
-            epsilon = (1.0 - 0.9 * self.actionCount / 1e6) if self.actionCount < 1e6 else .1
+            epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
             if random.random() > (1 - epsilon):
                 nextAction = random.randrange(self.numActions)
             else:
@@ -127,7 +129,7 @@ class DeepQNetwork:
             self.y_: y_
         })
         
-        if self.batchCount % 1000 == 0:
+        if self.batchCount % self.saveModelFrequency == 0:
             dir = self.baseDir + '/models'
             if not os.path.isdir(dir):
                 os.makedirs(dir)

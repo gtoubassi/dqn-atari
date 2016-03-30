@@ -16,6 +16,7 @@ parser.add_argument("--replay-capacity", type=int, default=100000, help="how man
 parser.add_argument("--frame-sample-freq", type=int, default=4, help="how often to sample frames into the state")
 parser.add_argument("--training-freq", type=int, default=4, help="how often (in frames) to train the network")
 parser.add_argument("--screen-capture-freq", type=int, default=100, help="record screens for a game this often")
+parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
 parser.add_argument("--observation-frames", type=int, default=5000, help="train only after this many frames")
 parser.add_argument("--learning-rate", type=float, default=2e-4, help="learning rate (step size for optimization algo)")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
@@ -28,6 +29,7 @@ frameSampleFrequency = args.frame_sample_freq
 trainingFrequency = args.training_freq
 minObservationFrames = args.observation_frames
 screenCaptureFrequency = args.screen_capture_freq
+saveModelFrequency = args.save_model_freq
 learningRate = args.learning_rate
 modelFile = args.model
 
@@ -55,7 +57,7 @@ actionSet = ale.getMinimalActionSet();
 baseOutputDir = 'game-out-' + time.strftime("%Y-%m-%d-%H-%M-%S")
 os.makedirs(baseOutputDir)
 
-dqn = dqn.DeepQNetwork(screenWidth, screenHeight, len(actionSet), baseOutputDir, learningRate, modelFile)
+dqn = dqn.DeepQNetwork(screenWidth, screenHeight, len(actionSet), baseOutputDir, learningRate, modelFile, saveModelFrequency)
 replayMemory = replay.ReplayMemory(replayMemoryCapacity)
 gameCount = 0
 
