@@ -8,7 +8,7 @@ import tensorflow as tf
 gamma = .99
 
 class DeepQNetwork:
-    def __init__(self, width, height, numActions, baseDir, learningRate):
+    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile):
         self.numActions = numActions
         self.width = width
         self.height = height
@@ -76,6 +76,10 @@ class DeepQNetwork:
 
           # Initialize variables
           self.sess.run(tf.initialize_all_variables())
+
+          if modelFile is not None:
+              print('Loading from model file %s' % (modelFile))
+              self.saver.restore(self.sess, modelFile)
 
     def chooseAction(self, state):
         self.actionCount += 1
