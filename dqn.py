@@ -8,8 +8,8 @@ import tensorflow as tf
 gamma = .99
 
 class DeepQNetwork:
-    def __init__(self, width, height, actions, baseDir):
-        self.actions = actions
+    def __init__(self, width, height, numActions, baseDir, learningRate):
+        self.numActions = numActions
         self.width = width
         self.height = height
         self.baseDir = baseDir
@@ -52,14 +52,14 @@ class DeepQNetwork:
           print('h_fc1 %s' % (h_fc1.get_shape()))
           
           # Fifth (Output) layer is fully connected linear layer
-          W_fc2 = tf.Variable(tf.truncated_normal([256, len(actions)], stddev=0.1))
-          b_fc2 = tf.Variable(tf.constant(0.1, shape=[len(actions)]))
+          W_fc2 = tf.Variable(tf.truncated_normal([256, numActions], stddev=0.1))
+          b_fc2 = tf.Variable(tf.constant(0.1, shape=[numActions]))
           
           self.y = tf.matmul(h_fc1, W_fc2) + b_fc2
           print('y %s' % (self.y.get_shape()))
           self.best_action = tf.argmax(self.y, 1)
 
-          self.a = tf.placeholder(tf.float32, shape=[None, len(actions)])
+          self.a = tf.placeholder(tf.float32, shape=[None, numActions])
           print('a %s' % (self.a.get_shape()))
           self.y_ = tf.placeholder(tf.float32, [None])
           print('y_ %s' % (self.y_.get_shape()))
@@ -70,7 +70,7 @@ class DeepQNetwork:
           self.loss = tf.reduce_mean(tf.square(self.y_a - self.y_))
 
           # (??) learning rate
-          self.train_step = tf.train.AdamOptimizer(1e-6).minimize(self.loss)
+          self.train_step = tf.train.AdamOptimizer(learningRate).minimize(self.loss)
 
           self.saver = tf.train.Saver(max_to_keep=25)
 
@@ -88,7 +88,7 @@ class DeepQNetwork:
             # then .1 thereafter (??)
             epsilon = (1.0 - 0.9 * self.actionCount / 1e6) if self.actionCount < 1e6 else .1
             if random.random() > (1 - epsilon):
-                nextAction = random.randrange(len(self.actions))
+                nextAction = random.randrange(self.numActions)
             else:
                 screens = np.reshape(state.screens, (1, 105, 80, 4))
                 best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
@@ -107,7 +107,7 @@ class DeepQNetwork:
         y2 = self.y.eval(feed_dict={self.x: x2})
         
         x = [b.state1.screens for b in batch]
-        a = np.zeros((len(batch), len(self.actions)))
+        a = np.zeros((len(batch), self.numActions))
         y_ = np.zeros(len(batch))
         
         for i in range(0, len(batch)):

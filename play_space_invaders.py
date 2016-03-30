@@ -7,12 +7,29 @@ import random
 import os
 import replay
 import time
+import argparse
 import dqn
 from ale_python_interface import ALEInterface
 
-if len(sys.argv) < 2:
-  print('Usage: %s rom_file' % sys.argv[0])
-  sys.exit()
+parser = argparse.ArgumentParser()
+parser.add_argument("--replay-capacity", default=100000, help="how many states to store for future training")
+parser.add_argument("--frame-sample-freq", default=4, help="how often to sample frames into the state")
+parser.add_argument("--training-freq", default=4, help="how often (in frames) to train the network")
+parser.add_argument("--screen-capture-freq", default=100, help="record screens for a game this often")
+parser.add_argument("--observation-frames", default=5000, help="train only after this many frames")
+parser.add_argument("--learning-rate", type=float, default=2e-4, help="learning rate (step size for optimization algo)")
+parser.add_argument("rom", help="rom file to run")
+args = parser.parse_args()
+
+romFile = args.rom
+replayMemoryCapacity = args.replay_capacity
+frameSampleFrequency = args.frame_sample_freq
+trainingFrequency = args.training_freq
+minObservationFrames = args.observation_frames
+screenCaptureFrequency = args.screen_capture_freq
+learningRate = args.learning_rate
+
+print 'Arguments: %s' % (args)
 
 ale = ALEInterface()
 
@@ -22,12 +39,11 @@ ale.setInt(b'random_seed', 123456)
 random.seed(123456)
 
 # This is to deal with the issue mentioned in the paper for space invaders
-# where bullets are only drawn on some frames (?? is it a net win)
+# where bullets are only drawn on some frames
 ale.setBool(b'color_averaging', True)
 
 # Load the ROM file
-rom_file = str.encode(sys.argv[1])
-ale.loadROM(rom_file)
+ale.loadROM(romFile)
 
 screenWidth, screenHeight = ale.getScreenDims();
 screenData = np.empty((screenHeight, screenWidth, 1), dtype=np.uint8)
@@ -37,12 +53,8 @@ actionSet = ale.getMinimalActionSet();
 baseOutputDir = 'game-out-' + time.strftime("%Y-%m-%d-%H-%M-%S")
 os.makedirs(baseOutputDir)
 
-dqn = dqn.DeepQNetwork(screenWidth, screenHeight, actionSet, baseOutputDir) # (??) Can replace actionSet here with len(actionSet)
-replayMemory = replay.ReplayMemory(100000)
-frameSampleRate = 4 # sample frames for state every 4 frames
-trainingFrequency = 4 # train every 4 frames
-minObservationFrames = 1000
-screenCaptureFrequency = 100
+dqn = dqn.DeepQNetwork(screenWidth, screenHeight, len(actionSet), baseOutputDir, learningRate)
+replayMemory = replay.ReplayMemory(replayMemoryCapacity)
 gameCount = 0
 
 
@@ -70,7 +82,7 @@ for episode in range(100000):
         elif reward > 1:
             reward = 1
         
-        if ale.getFrameNumber() % frameSampleRate == 0:
+        if ale.getFrameNumber() % frameSampleFrequency == 0:
             ale.getScreenGrayscale(screenData)    
             oldState = state
             state = state.stateByAddingScreen(screenData)
