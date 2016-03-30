@@ -12,11 +12,11 @@ import dqn
 from ale_python_interface import ALEInterface
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--replay-capacity", default=100000, help="how many states to store for future training")
-parser.add_argument("--frame-sample-freq", default=4, help="how often to sample frames into the state")
-parser.add_argument("--training-freq", default=4, help="how often (in frames) to train the network")
-parser.add_argument("--screen-capture-freq", default=100, help="record screens for a game this often")
-parser.add_argument("--observation-frames", default=5000, help="train only after this many frames")
+parser.add_argument("--replay-capacity", type=int, default=100000, help="how many states to store for future training")
+parser.add_argument("--frame-sample-freq", type=int, default=4, help="how often to sample frames into the state")
+parser.add_argument("--training-freq", type=int, default=4, help="how often (in frames) to train the network")
+parser.add_argument("--screen-capture-freq", type=int, default=100, help="record screens for a game this often")
+parser.add_argument("--observation-frames", type=int, default=5000, help="train only after this many frames")
 parser.add_argument("--learning-rate", type=float, default=2e-4, help="learning rate (step size for optimization algo)")
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
