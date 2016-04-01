@@ -42,15 +42,10 @@ ale = ALEInterface()
 ale.setInt(b'random_seed', 123456)
 random.seed(123456)
 
-# This is to deal with the issue mentioned in the paper for space invaders
-# where bullets are only drawn on some frames
-ale.setBool(b'color_averaging', True)
-
 # Load the ROM file
 ale.loadROM(romFile)
 
 screenWidth, screenHeight = ale.getScreenDims();
-screenData = np.empty((screenHeight, screenWidth, 1), dtype=np.uint8)
 print('%d x %d' % (screenWidth, screenHeight))
 actionSet = ale.getMinimalActionSet();
 
@@ -67,9 +62,9 @@ for episode in range(100000):
     
     gameScore = 0
     oldState = None
-    ale.getScreenGrayscale(screenData)    
-    state = gs.State().stateByAddingScreen(screenData)
+    state = gs.State().stateByAddingScreen(ale.getScreenRGB(), ale.getFrameNumber())
     startTime = time.time()
+    lastRgbScreen = None
 
     while not ale.game_over():
       
@@ -86,11 +81,13 @@ for episode in range(100000):
         elif reward > 1:
             reward = 1
         
+        rgbScreen = ale.getScreenRGB()
         if ale.getFrameNumber() % frameSampleFrequency == 0:
-            ale.getScreenGrayscale(screenData)    
+            maxedScreen = np.maximum(rgbScreen, lastRgbScreen) if lastRgbScreen is not None else rgbScreen
             oldState = state
-            state = state.stateByAddingScreen(screenData)
+            state = state.stateByAddingScreen(maxedScreen, ale.getFrameNumber())
             replayMemory.addSample(replay.Sample(oldState, action, reward, state, ale.game_over()))
+        lastRgbScreen = rgbScreen
 
         if ale.getFrameNumber() > minObservationFrames and ale.getFrameNumber() % trainingFrequency == 0:
             # (??) batch size
@@ -107,7 +104,6 @@ for episode in range(100000):
     print('Episode %d ended with score: %d (%d frames in %fs for %d fps)' % (episode, gameScore, ale.getEpisodeFrameNumber(), episodeTime, ale.getEpisodeFrameNumber() / episodeTime))
     ale.reset_game()
     gameCount += 1
-
 
 def printScreen(screenData, screenWidth, screenHeight):
     print('screen:')
