@@ -18,7 +18,7 @@ parser.add_argument("--training-freq", type=int, default=4, help="how often (in 
 parser.add_argument("--screen-capture-freq", type=int, default=100, help="record screens for a game this often")
 parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
 parser.add_argument("--observation-frames", type=int, default=50000, help="train only after this many frames")
-parser.add_argument("--learning-rate", type=float, default=2e-4, help="learning rate (step size for optimization algo)")
+parser.add_argument("--learning-rate", type=float, default=0.00025, help="learning rate (step size for optimization algo)")
 parser.add_argument("--eval-model-update-freq", type=int, default=50000, help="how often to snapshot the model for eval purposes during training (per nature paper)")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
 parser.add_argument("rom", help="rom file to run")
