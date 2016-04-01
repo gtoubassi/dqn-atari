@@ -8,12 +8,13 @@ import tensorflow as tf
 gamma = .99
 
 class DeepQNetwork:
-    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency):
+    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency, evalModelUpdateFrequency):
         self.numActions = numActions
         self.width = width
         self.height = height
         self.baseDir = baseDir
         self.saveModelFrequency = saveModelFrequency
+        self.evalModelUpdateFrequency = evalModelUpdateFrequency
         self.actionCount = 0
         self.lastAction = 0
         self.lastActionFutureReward = 0
@@ -24,7 +25,8 @@ class DeepQNetwork:
         tf.set_random_seed(123456)
         
         with tf.device(None):
-          self.sess = tf.InteractiveSession()
+          self.sess = tf.Session()
+          self.staleSess = tf.Session()
 
           # First layer takes a screen, and shrinks by 2x
           self.x = tf.placeholder(tf.uint8, shape=[None, 105, 80, 4])
@@ -87,6 +89,7 @@ class DeepQNetwork:
 
           # Initialize variables
           self.sess.run(tf.initialize_all_variables())
+          self.staleSess.run(tf.initialize_all_variables())
 
           if modelFile is not None:
               print('Loading from model file %s' % (modelFile))
@@ -121,12 +124,15 @@ class DeepQNetwork:
         return nextAction, futureReward
         
     def train(self, batch):
+        
+        self.batchCount += 1 # Increment first so we don't save the model on the first run through
 
-        self.batchCount += 1
-        
+        # Use a stale session to evaluate to improve stability per nature paper (I dont deeply understand this (??))
+        evalSess = self.sess if self.batchCount == 1 else self.staleSess
+
         x2 = [b.state2.screens for b in batch]
-        y2 = self.y.eval(feed_dict={self.x: x2})
-        
+        y2 = self.y.eval(feed_dict={self.x: x2}, session=evalSess)
+
         x = [b.state1.screens for b in batch]
         a = np.zeros((len(batch), self.numActions))
         y_ = np.zeros(len(batch))
@@ -142,11 +148,13 @@ class DeepQNetwork:
             self.x: x,
             self.a: a,
             self.y_: y_
-        })
+        }, session=self.sess)
         
-        if self.batchCount % self.saveModelFrequency == 0:
+        if self.batchCount % self.evalModelUpdateFrequency == 0 or self.batchCount % self.saveModelFrequency == 0:
             dir = self.baseDir + '/models'
             if not os.path.isdir(dir):
                 os.makedirs(dir)
-            self.saver.save(self.sess, dir + '/model', global_step=self.batchCount)
-
+            savedPath = self.saver.save(self.sess, dir + '/model', global_step=self.batchCount)
+            
+            if self.batchCount % self.evalModelUpdateFrequency == 0:
+                self.saver.restore(self.staleSess, savedPath)
