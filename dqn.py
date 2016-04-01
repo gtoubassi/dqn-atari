@@ -103,7 +103,6 @@ class DeepQNetwork:
                 best_action_tensor, y_tensor = self.sess.run([self.best_action, self.y], {self.x: screens})
                 #best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
                 nextAction = best_action_tensor[0]
-                print(y_tensor.shape)
                 futureReward = y_tensor[0, nextAction]
         else:
             nextAction = self.lastAction
