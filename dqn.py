@@ -16,6 +16,7 @@ class DeepQNetwork:
         self.saveModelFrequency = saveModelFrequency
         self.actionCount = 0
         self.lastAction = 0
+        self.lastActionFutureReward = 0
         self.batchCount = 0
         self.annealingPeriod = 1e6 if modelFile is None else 0
 
@@ -72,7 +73,7 @@ class DeepQNetwork:
           self.loss = tf.reduce_mean(tf.square(self.y_a - self.y_))
 
           # (??) learning rate
-          self.train_step = tf.train.AdamOptimizer(learningRate).minimize(self.loss)
+          self.train_step = tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01).minimize(self.loss)
 
           self.saver = tf.train.Saver(max_to_keep=25)
 
@@ -86,6 +87,8 @@ class DeepQNetwork:
     def chooseAction(self, state):
         self.actionCount += 1
         
+        futureReward = 0
+        
         # Only select actions every 4th frame per dqn paper (??)
         
         if self.actionCount % 4 == 0:
@@ -97,13 +100,18 @@ class DeepQNetwork:
                 nextAction = random.randrange(self.numActions)
             else:
                 screens = np.reshape(state.screens, (1, 105, 80, 4))
-                best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
+                best_action_tensor, y_tensor = self.sess.run([self.best_action, self.y], {self.x: screens})
+                #best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
                 nextAction = best_action_tensor[0]
+                print(y_tensor.shape)
+                futureReward = y_tensor[0, nextAction]
         else:
             nextAction = self.lastAction
+            futureReward = self.lastActionFutureReward
 
         self.lastAction = nextAction   
-        return nextAction
+        self.lastActionFutureReward = futureReward   
+        return nextAction, futureReward
         
     def train(self, batch):
 
