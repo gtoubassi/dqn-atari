@@ -17,7 +17,7 @@ parser.add_argument("--frame-sample-freq", type=int, default=4, help="how often 
 parser.add_argument("--training-freq", type=int, default=4, help="how often (in frames) to train the network")
 parser.add_argument("--screen-capture-freq", type=int, default=100, help="record screens for a game this often")
 parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
-parser.add_argument("--observation-frames", type=int, default=5000, help="train only after this many frames")
+parser.add_argument("--observation-frames", type=int, default=10000, help="train only after this many frames")
 parser.add_argument("--learning-rate", type=float, default=2e-4, help="learning rate (step size for optimization algo)")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
 parser.add_argument("rom", help="rom file to run")
@@ -63,7 +63,7 @@ for episode in range(100000):
     gameScore = 0
     oldState = None
     state = gs.State().stateByAddingScreen(ale.getScreenRGB(), ale.getFrameNumber())
-    startTime = time.time()
+    startTime = lastLogTime = time.time()
     lastRgbScreen = None
 
     while not ale.game_over():
@@ -88,6 +88,10 @@ for episode in range(100000):
             state = state.stateByAddingScreen(maxedScreen, ale.getFrameNumber())
             replayMemory.addSample(replay.Sample(oldState, action, reward, state, ale.game_over()))
         lastRgbScreen = rgbScreen
+
+        if time.time() - lastLogTime > 60:
+            print('  ...frame %d' % ale.getEpisodeFrameNumber())
+            lastLogTime = time.time()
 
         if ale.getFrameNumber() > minObservationFrames and ale.getFrameNumber() % trainingFrequency == 0:
             # (??) batch size
