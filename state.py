@@ -5,7 +5,7 @@ import png
 class State:
 
     def stateByAddingScreen(self, screen, frameNumber):
-        screen = np.dot(screen, np.array([0.2126, 0.7152, 0.0722])).astype(np.uint8)
+        screen = np.dot(screen, np.array([.299, .587, .114])).astype(np.uint8)
         screen = ndimage.zoom(screen, (0.5, 0.5))
         screen.resize((105, 80, 1))
         #self.saveScreenAsPNG('screen', screen, frameNumber)

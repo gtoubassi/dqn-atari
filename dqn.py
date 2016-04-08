@@ -4,8 +4,25 @@ import random
 import os
 import tensorflow as tf
 
-# (??)
 gamma = .99
+
+class GradientClippingOptimizer(tf.train.Optimizer):
+    def __init__(self, optimizer, use_locking=False, name="GradientClipper"):
+        super(GradientClippingOptimizer, self).__init__(use_locking, name)
+        self.optimizer = optimizer
+
+    def compute_gradients(self, *args, **kwargs):
+        grads_and_vars = self.optimizer.compute_gradients(*args, **kwargs)
+        clipped_grads_and_vars = []
+        for (grad, var) in grads_and_vars:
+            if grad is not None:
+                clipped_grads_and_vars.append((tf.clip_by_value(grad, -1, 1), var))
+            else:
+                clipped_grads_and_vars.append((grad, var))
+        return clipped_grads_and_vars
+
+    def apply_gradients(self, *args, **kwargs):
+        return self.optimizer.apply_gradients(*args, **kwargs)
 
 class DeepQNetwork:
     def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency, evalModelUpdateFrequency):
@@ -33,29 +50,29 @@ class DeepQNetwork:
           print('x %s' % (self.x.get_shape()))
 
           # Second layer convolves 32 8x8 filters with stride 4 with relu
-          W_conv1 = tf.Variable(tf.truncated_normal([8, 8, 4, 32], stddev=0.1))
-          b_conv1 = tf.Variable(tf.constant(0.1, shape=[32]))
+          W_conv1 = tf.Variable(tf.random_normal([8, 8, 4, 32], stddev=0.01))
+          b_conv1 = tf.Variable(tf.zeros(shape=[32]))
           
           h_conv1 = tf.nn.relu(tf.nn.conv2d(tf.to_float(self.x), W_conv1, strides=[1, 4, 4, 1], padding='SAME') + b_conv1)
           print('h_conv1 %s' % (h_conv1.get_shape()))
           
           # Third layer convolves 64 4x4 filters with stride 2 with relu
-          W_conv2 = tf.Variable(tf.truncated_normal([4, 4, 32, 64], stddev=0.1))
-          b_conv2 = tf.Variable(tf.constant(0.1, shape=[64]))
+          W_conv2 = tf.Variable(tf.random_normal([4, 4, 32, 64], stddev=0.01))
+          b_conv2 = tf.Variable(tf.zeros(shape=[64]))
           
           h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, W_conv2, strides=[1, 2, 2, 1], padding='SAME') + b_conv2)
           print('h_conv2 %s' % (h_conv2.get_shape()))
           
           # Fourth layer convolves 64 3x3 filters with stride 1 with relu
-          W_conv3 = tf.Variable(tf.truncated_normal([3, 3, 64, 64], stddev=0.1))
-          b_conv3 = tf.Variable(tf.constant(0.1, shape=[64]))
+          W_conv3 = tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=0.01))
+          b_conv3 = tf.Variable(tf.zeros(shape=[64]))
           
           h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding='SAME') + b_conv3)
           print('h_conv3 %s' % (h_conv3.get_shape()))
           
           # Fifth layer is fully connected with 512 relu units
-          W_fc1 = tf.Variable(tf.truncated_normal([14 * 10 * 64, 512], stddev=0.1))
-          b_fc1 = tf.Variable(tf.constant(0.1, shape=[512]))
+          W_fc1 = tf.Variable(tf.random_normal([14 * 10 * 64, 512], stddev=0.01))
+          b_fc1 = tf.Variable(tf.zeros(shape=[512]))
           
           h_conv2_flat = tf.reshape(h_conv2, [-1, 14 * 10 * 64])
           print('h_conv2_flat %s' % (h_conv2_flat.get_shape()))
@@ -64,8 +81,8 @@ class DeepQNetwork:
           print('h_fc1 %s' % (h_fc1.get_shape()))
           
           # Sixth (Output) layer is fully connected linear layer
-          W_fc2 = tf.Variable(tf.truncated_normal([512, numActions], stddev=0.1))
-          b_fc2 = tf.Variable(tf.constant(0.1, shape=[numActions]))
+          W_fc2 = tf.Variable(tf.random_normal([512, numActions], stddev=0.01))
+          b_fc2 = tf.Variable(tf.zeros(shape=[numActions]))
           
           self.y = tf.matmul(h_fc1, W_fc2) + b_fc2
           print('y %s' % (self.y.get_shape()))
@@ -79,11 +96,11 @@ class DeepQNetwork:
           self.y_a = tf.reduce_sum(tf.mul(self.y, self.a), reduction_indices=1)
           print('y_a %s' % (self.y_a.get_shape()))
           
-          clipped_error = tf.clip_by_value(self.y_a - self.y_, -1, 1) # Per nature paper.  Am I getting this right?
-          self.loss = tf.reduce_mean(tf.square(clipped_error))
+          self.loss = tf.reduce_mean(tf.square(self.y_a - self.y_))
 
           # (??) learning rate
-          self.train_step = tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01).minimize(self.loss)
+          optimizer = GradientClippingOptimizer(tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01))
+          self.train_step = optimizer.minimize(self.loss)
 
           self.saver = tf.train.Saver(max_to_keep=25)
 

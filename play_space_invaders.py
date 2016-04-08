@@ -19,7 +19,7 @@ parser.add_argument("--screen-capture-freq", type=int, default=100, help="record
 parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
 parser.add_argument("--observation-frames", type=int, default=50000, help="train only after this many frames")
 parser.add_argument("--learning-rate", type=float, default=0.00025, help="learning rate (step size for optimization algo)")
-parser.add_argument("--eval-model-update-freq", type=int, default=50000, help="how often to snapshot the model for eval purposes during training (per nature paper)")
+parser.add_argument("--eval-model-update-freq", type=int, default=10000, help="how often to snapshot the model for eval purposes during training (per nature paper)")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
@@ -67,6 +67,8 @@ for episode in range(100000):
     state = gs.State().stateByAddingScreen(ale.getScreenRGB(), ale.getFrameNumber())
     startTime = lastLogTime = time.time()
     lastRgbScreen = None
+    stateReward = 0
+    is_terminal = 0
 
     while not ale.game_over():
       
@@ -76,19 +78,22 @@ for episode in range(100000):
         previous_lives = ale.lives()
         reward = ale.act(actionSet[action])
         gameScore += reward
+        stateReward += reward
         
-        # Convert reward to -1, 0, +1
-        if ale.lives() < previous_lives or reward < 0:
-            reward = -1
-        elif reward > 1:
-            reward = 1
+        # Detect end of episode, I don't think I'm handling this right in terms
+        # of the overall game loop (??)
+        if ale.lives() < previous_lives or ale.game_over():
+            is_terminal = 1
         
         rgbScreen = ale.getScreenRGB()
         if ale.getFrameNumber() % frameSampleFrequency == 0:
             maxedScreen = np.maximum(rgbScreen, lastRgbScreen) if lastRgbScreen is not None else rgbScreen
             oldState = state
             state = state.stateByAddingScreen(maxedScreen, ale.getFrameNumber())
-            replayMemory.addSample(replay.Sample(oldState, action, reward, state, ale.game_over()))
+            clippedReward = min(1, max(-1, stateReward))
+            replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, is_terminal))
+            stateReward = 0
+            is_terminal = 0
         lastRgbScreen = rgbScreen
 
         if time.time() - lastLogTime > 60:
@@ -110,21 +115,3 @@ for episode in range(100000):
     print('Episode %d ended with score: %d (%d frames in %fs for %d fps)' % (episode, gameScore, ale.getEpisodeFrameNumber(), episodeTime, ale.getEpisodeFrameNumber() / episodeTime))
     ale.reset_game()
     gameCount += 1
-
-def printScreen(screenData, screenWidth, screenHeight):
-    print('screen:')
-    for y in range(screenHeight // 5):
-        for x in range(screenWidth // 2):
-            pixelSum = 0
-            maxPixel = 0
-            for yblock in range(5):
-                for xblock in range(2):
-                    if screenData[y * 5 + yblock, x * 2 + xblock] > maxPixel:
-                        max_pixel = screenData[y * 5 + yblock, x * 2 + xblock]
-                    pixelSum = np.int32(screenData[y * 5 + yblock, x * 2 + xblock])
-            pixel = pixelSum // 10
-            sys.stdout.write('#' if maxPixel > 50 else ' ')
-        print('')
-    print('')
-          
-    
