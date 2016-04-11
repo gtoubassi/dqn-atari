@@ -68,7 +68,7 @@ for episode in range(100000):
     startTime = lastLogTime = time.time()
     lastRgbScreen = None
     stateReward = 0
-    is_terminal = 0
+    isTerminal = 0
 
     while not ale.game_over():
       
@@ -83,27 +83,32 @@ for episode in range(100000):
         # Detect end of episode, I don't think I'm handling this right in terms
         # of the overall game loop (??)
         if ale.lives() < previous_lives or ale.game_over():
-            is_terminal = 1
+            isTerminal = 1
         
         rgbScreen = ale.getScreenRGB()
-        if ale.getFrameNumber() % frameSampleFrequency == 0:
+        if isTerminal or ale.getFrameNumber() % frameSampleFrequency == 0:
             maxedScreen = np.maximum(rgbScreen, lastRgbScreen) if lastRgbScreen is not None else rgbScreen
             oldState = state
             state = state.stateByAddingScreen(maxedScreen, ale.getFrameNumber())
             clippedReward = min(1, max(-1, stateReward))
-            replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, is_terminal))
+            replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, isTerminal))
             stateReward = 0
-            is_terminal = 0
+                
         lastRgbScreen = rgbScreen
 
         if time.time() - lastLogTime > 60:
             print('  ...frame %d' % ale.getEpisodeFrameNumber())
             lastLogTime = time.time()
 
-        if ale.getFrameNumber() > minObservationFrames and ale.getFrameNumber() % trainingFrequency == 0:
+        if ale.getFrameNumber() > minObservationFrames and (isTerminal or ale.getFrameNumber() % trainingFrequency == 0):
             # (??) batch size
             batch = replayMemory.drawBatch(32)
             dqn.train(batch)
+
+        if isTerminal:
+            isTerminal = 0
+            oldState = None
+            state = gs.State().stateByAddingScreen(ale.getScreenRGB(), ale.getFrameNumber())
         
         if gameCount % screenCaptureFrequency == 0:
             dir = baseOutputDir + '/screen_cap/game-%06d' % (gameCount)
