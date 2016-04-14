@@ -47,13 +47,16 @@ class DeepQNetwork:
 
           # First layer takes a screen, and shrinks by 2x
           self.x = tf.placeholder(tf.uint8, shape=[None, 105, 80, 4])
-          print('x %s' % (self.x.get_shape()))
+          print('x %s %s' % (self.x.get_shape(), self.x.dtype))
+
+          x_normalized = tf.to_float(self.x) / 255.0
+          print('x_normalized %s %s' % (x_normalized.get_shape(), x_normalized.dtype))
 
           # Second layer convolves 32 8x8 filters with stride 4 with relu
           W_conv1 = tf.Variable(tf.random_normal([8, 8, 4, 32], stddev=0.01))
           b_conv1 = tf.Variable(tf.zeros(shape=[32]))
           
-          h_conv1 = tf.nn.relu(tf.nn.conv2d(tf.to_float(self.x), W_conv1, strides=[1, 4, 4, 1], padding='SAME') + b_conv1)
+          h_conv1 = tf.nn.relu(tf.nn.conv2d(x_normalized, W_conv1, strides=[1, 4, 4, 1], padding='SAME') + b_conv1)
           print('h_conv1 %s' % (h_conv1.get_shape()))
           
           # Third layer convolves 64 4x4 filters with stride 2 with relu
