@@ -77,10 +77,10 @@ class DeepQNetwork:
           W_fc1 = tf.Variable(tf.random_normal([14 * 10 * 64, 512], stddev=0.01))
           b_fc1 = tf.Variable(tf.zeros(shape=[512]))
           
-          h_conv2_flat = tf.reshape(h_conv2, [-1, 14 * 10 * 64])
-          print('h_conv2_flat %s' % (h_conv2_flat.get_shape()))
+          h_conv3_flat = tf.reshape(h_conv3, [-1, 14 * 10 * 64])
+          print('h_conv3_flat %s' % (h_conv3_flat.get_shape()))
           
-          h_fc1 = tf.nn.relu(tf.matmul(h_conv2_flat, W_fc1) + b_fc1)
+          h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
           print('h_fc1 %s' % (h_fc1.get_shape()))
           
           # Sixth (Output) layer is fully connected linear layer
