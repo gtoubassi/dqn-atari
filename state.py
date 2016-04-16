@@ -11,22 +11,17 @@ class State:
         #self.saveScreenAsPNG('screen', screen, frameNumber)
         newState = State()
         if hasattr(self, 'screens'):
-            newState.screens = np.append(screen, self.screens[:, :, :3], axis=2)
+            newState.screens = self.screens[:3]
+            newState.screens.insert(0, screen)
         else:
-            screen = np.reshape(screen, (screen.shape[0], screen.shape[1]))
-            newState.screens = np.stack((screen, screen, screen, screen), axis=2)
+            newState.screens = [screen, screen, screen, screen]
         return newState
+    
+    def getScreens(self):
+        return np.append(screens[0], screens[1], screens[2], screens[3], axis=2)
     
     def saveScreenAsPNG(self, basefilename, screen, frameNumber):
         pngfile = open(basefilename + ('-%08d.png' % frameNumber), 'wb')
         pngWriter = png.Writer(screen.shape[1], screen.shape[0], greyscale=True)
         pngWriter.write(pngfile, screen)
         pngfile.close()
-    
-    def saveStateAsPNGs(self, basefilename):
-        for i in range(4):
-            pngfile = open(basefilename + ('-%d.png' % i), 'wb')
-            screen = self.screens[:,:,i]
-            pngWriter = png.Writer(screen.shape[1], screen.shape[0], greyscale=True)
-            pngWriter.write(pngfile, screen)
-            pngfile.close()

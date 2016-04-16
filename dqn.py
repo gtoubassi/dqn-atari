@@ -129,7 +129,7 @@ class DeepQNetwork:
             if random.random() > (1 - epsilon):
                 nextAction = random.randrange(self.numActions)
             else:
-                screens = np.reshape(state.screens, (1, 105, 80, 4))
+                screens = np.reshape(state.getScreens(), (1, 105, 80, 4))
                 best_action_tensor, y_tensor = self.sess.run([self.best_action, self.y], {self.x: screens})
                 #best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
                 nextAction = best_action_tensor[0]
@@ -149,10 +149,10 @@ class DeepQNetwork:
         # Use a stale session to evaluate to improve stability per nature paper (I dont deeply understand this (??))
         evalSess = self.sess if self.staleSess is None else self.staleSess
 
-        x2 = [b.state2.screens for b in batch]
+        x2 = [b.state2.getScreens() for b in batch]
         y2 = self.y.eval(feed_dict={self.x: x2}, session=evalSess)
 
-        x = [b.state1.screens for b in batch]
+        x = [b.state1.getScreens() for b in batch]
         a = np.zeros((len(batch), self.numActions))
         y_ = np.zeros(len(batch))
         
