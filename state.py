@@ -18,7 +18,7 @@ class State:
         return newState
     
     def getScreens(self):
-        return np.append(screens[0], screens[1], screens[2], screens[3], axis=2)
+        return np.concatenate(self.screens, axis=2)
     
     def saveScreenAsPNG(self, basefilename, screen, frameNumber):
         pngfile = open(basefilename + ('-%08d.png' % frameNumber), 'wb')
