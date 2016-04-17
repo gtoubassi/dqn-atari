@@ -46,7 +46,7 @@ class DeepQNetwork:
           self.sess = tf.Session()
 
           # First layer takes a screen, and shrinks by 2x
-          self.x = tf.placeholder(tf.uint8, shape=[None, 105, 80, 4])
+          self.x = tf.placeholder(tf.uint8, shape=[None, 84, 84, 4])
           print('x %s %s' % (self.x.get_shape(), self.x.dtype))
 
           x_normalized = tf.to_float(self.x) / 255.0
@@ -74,10 +74,10 @@ class DeepQNetwork:
           print('h_conv3 %s' % (h_conv3.get_shape()))
           
           # Fifth layer is fully connected with 512 relu units
-          W_fc1 = tf.Variable(tf.random_normal([14 * 10 * 64, 512], stddev=0.01))
+          W_fc1 = tf.Variable(tf.random_normal([11 * 11 * 64, 512], stddev=0.01))
           b_fc1 = tf.Variable(tf.zeros(shape=[512]))
           
-          h_conv3_flat = tf.reshape(h_conv3, [-1, 14 * 10 * 64])
+          h_conv3_flat = tf.reshape(h_conv3, [-1, 11 * 11 * 64])
           print('h_conv3_flat %s' % (h_conv3_flat.get_shape()))
           
           h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
@@ -129,7 +129,7 @@ class DeepQNetwork:
             if random.random() > (1 - epsilon):
                 nextAction = random.randrange(self.numActions)
             else:
-                screens = np.reshape(state.getScreens(), (1, 105, 80, 4))
+                screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
                 best_action_tensor, y_tensor = self.sess.run([self.best_action, self.y], {self.x: screens})
                 #best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
                 nextAction = best_action_tensor[0]
