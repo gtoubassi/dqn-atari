@@ -99,10 +99,16 @@ class DeepQNetwork:
           self.y_a = tf.reduce_sum(tf.mul(self.y, self.a), reduction_indices=1)
           print('y_a %s' % (self.y_a.get_shape()))
           
-          self.loss = tf.reduce_mean(tf.square(tf.clip_by_value(self.y_a - self.y_, -1.0, 1.0)))
+          difference = tf.abs(self.y_a - self.y_)
+          quadratic_part = tf.clip_by_value(difference, 0.0, 1.0)
+          linear_part = difference - quadratic_part
+          errors = (0.5 * tf.square(quadratic_part)) + linear_part
+          self.loss = tf.reduce_sum(errors)
+          #self.loss = tf.reduce_mean(tf.square(self.y_a - self.y_))
 
           # (??) learning rate
-          optimizer = GradientClippingOptimizer(tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01))
+          #optimizer = GradientClippingOptimizer(tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01))
+          optimizer = tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01)
           self.train_step = optimizer.minimize(self.loss)
 
           self.saver = tf.train.Saver(max_to_keep=25)
