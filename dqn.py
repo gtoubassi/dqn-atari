@@ -25,13 +25,15 @@ class GradientClippingOptimizer(tf.train.Optimizer):
         return self.optimizer.apply_gradients(*args, **kwargs)
 
 class DeepQNetwork:
-    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency, evalModelUpdateFrequency):
+    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency, targetModelUpdateFrequency, evalEpsilon):
         self.numActions = numActions
         self.width = width
         self.height = height
         self.baseDir = baseDir
         self.saveModelFrequency = saveModelFrequency
-        self.evalModelUpdateFrequency = evalModelUpdateFrequency
+        self.targetModelUpdateFrequency = targetModelUpdateFrequency
+        self.evalEpsilon = evalEpsilon
+        
         self.actionCount = 0
         self.lastAction = 0
         self.lastActionFutureReward = 0
@@ -128,10 +130,15 @@ class DeepQNetwork:
         # Only select actions every 4th frame per dqn paper (??)
         
         if self.actionCount % 4 == 0:
+            
             # e-greedy selection
             # Per dqn paper we anneal epsilon from 1 to .1 over the first 1e6 frames and
             # then .1 thereafter (??)
-            epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
+            if self.evalEpsilon is None:
+                epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
+            else:
+                epsilon = self.evalEpsilon
+                
             if random.random() > (1 - epsilon):
                 nextAction = random.randrange(self.numActions)
             else:
@@ -175,13 +182,13 @@ class DeepQNetwork:
             self.y_: y_
         }, session=self.sess)
         
-        if self.batchCount % self.evalModelUpdateFrequency == 0 or self.batchCount % self.saveModelFrequency == 0:
+        if self.batchCount % self.targetModelUpdateFrequency == 0 or self.batchCount % self.saveModelFrequency == 0:
             dir = self.baseDir + '/models'
             if not os.path.isdir(dir):
                 os.makedirs(dir)
             savedPath = self.saver.save(self.sess, dir + '/model', global_step=self.batchCount)
             
-            if self.batchCount % self.evalModelUpdateFrequency == 0:
+            if self.batchCount % self.targetModelUpdateFrequency == 0:
                 if self.staleSess is not None:
                     self.staleSess.close()
                 self.staleSess = tf.Session()
