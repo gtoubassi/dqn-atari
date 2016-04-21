@@ -55,29 +55,29 @@ class DeepQNetwork:
           print('x_normalized %s %s' % (x_normalized.get_shape(), x_normalized.dtype))
 
           # Second layer convolves 32 8x8 filters with stride 4 with relu
-          W_conv1 = tf.Variable(tf.random_normal([8, 8, 4, 32], stddev=0.01))
-          b_conv1 = tf.Variable(tf.zeros(shape=[32]))
+          W_conv1 = tf.Variable(tf.truncated_normal([8, 8, 4, 32], stddev=0.01))
+          b_conv1 = tf.Variable(tf.fill([32], 0.1))
           
           h_conv1 = tf.nn.relu(tf.nn.conv2d(x_normalized, W_conv1, strides=[1, 4, 4, 1], padding='SAME') + b_conv1)
           print('h_conv1 %s' % (h_conv1.get_shape()))
           
           # Third layer convolves 64 4x4 filters with stride 2 with relu
-          W_conv2 = tf.Variable(tf.random_normal([4, 4, 32, 64], stddev=0.01))
-          b_conv2 = tf.Variable(tf.zeros(shape=[64]))
+          W_conv2 = tf.Variable(tf.truncated_normal([4, 4, 32, 64], stddev=0.01))
+          b_conv2 = tf.Variable(tf.fill([64], 0.1))
           
           h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, W_conv2, strides=[1, 2, 2, 1], padding='SAME') + b_conv2)
           print('h_conv2 %s' % (h_conv2.get_shape()))
           
           # Fourth layer convolves 64 3x3 filters with stride 1 with relu
-          W_conv3 = tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=0.01))
-          b_conv3 = tf.Variable(tf.zeros(shape=[64]))
+          W_conv3 = tf.Variable(tf.truncated_normal([3, 3, 64, 64], stddev=0.01))
+          b_conv3 = tf.Variable(tf.fill([64], 0.1))
           
           h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding='SAME') + b_conv3)
           print('h_conv3 %s' % (h_conv3.get_shape()))
           
           # Fifth layer is fully connected with 512 relu units
-          W_fc1 = tf.Variable(tf.random_normal([11 * 11 * 64, 512], stddev=0.01))
-          b_fc1 = tf.Variable(tf.zeros(shape=[512]))
+          W_fc1 = tf.Variable(tf.truncated_normal([11 * 11 * 64, 512], stddev=0.01))
+          b_fc1 = tf.Variable(tf.fill([512], 0.1))
           
           h_conv3_flat = tf.reshape(h_conv3, [-1, 11 * 11 * 64])
           print('h_conv3_flat %s' % (h_conv3_flat.get_shape()))
@@ -86,8 +86,8 @@ class DeepQNetwork:
           print('h_fc1 %s' % (h_fc1.get_shape()))
           
           # Sixth (Output) layer is fully connected linear layer
-          W_fc2 = tf.Variable(tf.random_normal([512, numActions], stddev=0.01))
-          b_fc2 = tf.Variable(tf.zeros(shape=[numActions]))
+          W_fc2 = tf.Variable(tf.truncated_normal([512, numActions], stddev=0.01))
+          b_fc2 = tf.Variable(tf.fill([numActions], 0.1))
           
           self.y = tf.matmul(h_fc1, W_fc2) + b_fc2
           print('y %s' % (self.y.get_shape()))
