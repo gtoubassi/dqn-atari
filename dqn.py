@@ -34,7 +34,8 @@ class DeepQNetwork:
         
         self.actionCount = 0
         self.batchCount = 0
-        self.annealingPeriod = 1e6 if args.model is None else 0
+        # 250k environment steps is the same as 1e6 game frames
+        self.annealingPeriod = 250000 if args.model is None else 0
         self.staleSess = None
 
         
