@@ -25,14 +25,13 @@ class GradientClippingOptimizer(tf.train.Optimizer):
         return self.optimizer.apply_gradients(*args, **kwargs)
 
 class DeepQNetwork:
-    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency, targetModelUpdateFrequency, evalEpsilon):
+    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency, targetModelUpdateFrequency):
         self.numActions = numActions
         self.width = width
         self.height = height
         self.baseDir = baseDir
         self.saveModelFrequency = saveModelFrequency
         self.targetModelUpdateFrequency = targetModelUpdateFrequency
-        self.evalEpsilon = evalEpsilon
         
         self.actionCount = 0
         self.lastAction = 0
@@ -138,8 +137,6 @@ class DeepQNetwork:
             # then .1 thereafter (??)
             if overrideEpsilon is not None:
                 epsilon = overrideEpsilon
-            elif self.evalEpsilon is not None:
-                epsilon = self.evalEpsilon
             else:
                 epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
 
