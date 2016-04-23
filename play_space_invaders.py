@@ -37,15 +37,10 @@ environment = AtariEnvironment(args, baseOutputDir)
 dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
 replayMemory = replay.ReplayMemory(replayMemoryCapacity)
 
-#TODO MOVE THIS INTO environment
-episode = 0
-
 def runEpoch(minEpochFrames, evalWithEpsilon=None):
-    # make the agent a class
-    global episode
     frameStart = environment.getFrameNumber()
     isTraining = True if evalWithEpsilon is None else False
-    epochEpisode = 0
+    startGameCount = environment.getGameCount()
     epochTotalScore = 0
 
     while environment.getFrameNumber() - frameStart < minEpochFrames:
@@ -76,12 +71,10 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
                 state = None
 
         episodeTime = time.time() - startTime
-        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' % (epochType, episode, environment.getGameScore(), environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
+        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' % (epochType, environment.getGameCount(), environment.getGameScore(), environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
         environment.resetGame()
-        episode += 1
-        epochEpisode += 1
         epochTotalScore += environment.getGameScore()
-    return epochTotalScore / epochEpisode
+    return epochTotalScore / (environment.getGameCount() - startGameCount)
     
 
 

@@ -4,6 +4,12 @@ import random
 from state import State
 from ale_python_interface import ALEInterface
 
+# Terminology in this class:
+#   Episode: the span of one game life
+#   Game: an ALE game (e.g. in space invaders == 3 Episodes or 3 Lives)
+#   Frame: An ALE frame (e.g. 60 fps)
+#   Step: An Environment step (e.g. covers 4 frames)
+#
 class AtariEnvironment:
     
     def __init__(self, args, outputDir):
@@ -29,6 +35,9 @@ class AtariEnvironment:
 
     def getState(self):
         return self.state
+    
+    def getGameCount(self):
+        return self.gameCount
     
     def getFrameNumber(self):
         return self.ale.getFrameNumber()
