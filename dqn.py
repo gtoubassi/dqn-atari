@@ -25,19 +25,16 @@ class GradientClippingOptimizer(tf.train.Optimizer):
         return self.optimizer.apply_gradients(*args, **kwargs)
 
 class DeepQNetwork:
-    def __init__(self, width, height, numActions, baseDir, learningRate, modelFile, saveModelFrequency, targetModelUpdateFrequency):
+    def __init__(self, numActions, baseDir, args):
+        
         self.numActions = numActions
-        self.width = width
-        self.height = height
         self.baseDir = baseDir
-        self.saveModelFrequency = saveModelFrequency
-        self.targetModelUpdateFrequency = targetModelUpdateFrequency
+        self.saveModelFrequency = args.save_model_freq
+        self.targetModelUpdateFrequency = args.target_model_update_freq
         
         self.actionCount = 0
-        self.lastAction = 0
-        self.lastActionFutureReward = 0
         self.batchCount = 0
-        self.annealingPeriod = 1e6 if modelFile is None else 0
+        self.annealingPeriod = 1e6 if args.model is None else 0
         self.staleSess = None
 
         
@@ -110,8 +107,8 @@ class DeepQNetwork:
           # (??) learning rate
           # Note tried gradient clipping with rmsprop with this particular loss function and it seemed to suck
           # Perhaps I didn't run it long enough
-          #optimizer = GradientClippingOptimizer(tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01))
-          optimizer = tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01)
+          #optimizer = GradientClippingOptimizer(tf.train.RMSPropOptimizer(args.learning_rate, decay=.95, epsilon=.01))
+          optimizer = tf.train.RMSPropOptimizer(args.learning_rate, decay=.95, epsilon=.01)
           self.train_step = optimizer.minimize(self.loss)
 
           self.saver = tf.train.Saver(max_to_keep=25)
@@ -119,41 +116,32 @@ class DeepQNetwork:
           # Initialize variables
           self.sess.run(tf.initialize_all_variables())
 
-          if modelFile is not None:
-              print('Loading from model file %s' % (modelFile))
-              self.saver.restore(self.sess, modelFile)
+          if args.model is not None:
+              print('Loading from model file %s' % (args.model))
+              self.saver.restore(self.sess, args.model)
 
     def chooseAction(self, state, overrideEpsilon=None):
         self.actionCount += 1
         
         futureReward = 0
         
-        # Only select actions every 4th frame per dqn paper (??)
-        
-        if self.actionCount % 4 == 0:
-            
-            # e-greedy selection
-            # Per dqn paper we anneal epsilon from 1 to .1 over the first 1e6 frames and
-            # then .1 thereafter (??)
-            if overrideEpsilon is not None:
-                epsilon = overrideEpsilon
-            else:
-                epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
-
-            if random.random() > (1 - epsilon):
-                nextAction = random.randrange(self.numActions)
-            else:
-                screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
-                best_action_tensor, y_tensor = self.sess.run([self.best_action, self.y], {self.x: screens})
-                #best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
-                nextAction = best_action_tensor[0]
-                futureReward = y_tensor[0, nextAction]
+        # e-greedy selection
+        # Per dqn paper we anneal epsilon from 1 to .1 over the first 1e6 frames and
+        # then .1 thereafter (??)
+        if overrideEpsilon is not None:
+            epsilon = overrideEpsilon
         else:
-            nextAction = self.lastAction
-            futureReward = self.lastActionFutureReward
+            epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
 
-        self.lastAction = nextAction   
-        self.lastActionFutureReward = futureReward   
+        if random.random() > (1 - epsilon):
+            nextAction = random.randrange(self.numActions)
+        else:
+            screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
+            best_action_tensor, y_tensor = self.sess.run([self.best_action, self.y], {self.x: screens})
+            #best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
+            nextAction = best_action_tensor[0]
+            futureReward = y_tensor[0, nextAction]
+
         return nextAction, futureReward
         
     def train(self, batch):
