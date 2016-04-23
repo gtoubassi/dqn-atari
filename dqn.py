@@ -109,6 +109,8 @@ class DeepQNetwork:
           #self.loss = tf.reduce_mean(tf.square(self.y_a - self.y_))
 
           # (??) learning rate
+          # Note tried gradient clipping with rmsprop with this particular loss function and it seemed to suck
+          # Perhaps I didn't run it long enough
           #optimizer = GradientClippingOptimizer(tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01))
           optimizer = tf.train.RMSPropOptimizer(learningRate, decay=.95, epsilon=.01)
           self.train_step = optimizer.minimize(self.loss)

@@ -51,6 +51,9 @@ ale = ALEInterface()
 ale.setInt(b'random_seed', 123456)
 random.seed(123456)
 
+# Fix https://groups.google.com/forum/#!topic/deep-q-learning/p4FAIaabwlo
+ale.setFloat(b'repeat_action_probability', 0.0)
+
 # Load the ROM file
 ale.loadROM(romFile)
 
