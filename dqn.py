@@ -142,7 +142,7 @@ class DeepQNetwork:
                 epsilon = self.evalEpsilon
             else:
                 epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
-            print(epsilon)
+
             if random.random() > (1 - epsilon):
                 nextAction = random.randrange(self.numActions)
             else:
