@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 import os
+import random
 import replay
 import time
 import argparse
@@ -57,8 +58,8 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
             else:
                 epsilon = evalWithEpsilon
 
-            if random.random() > (1 - epsilon):
-                action = random.randrange(self.numActions)
+            if state is None or random.random() > (1 - epsilon):
+                action = random.randrange(environment.getNumActions())
             else:
                 screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
                 action = self.inference(screens)

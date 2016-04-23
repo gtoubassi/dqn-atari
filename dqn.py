@@ -1,6 +1,5 @@
 import state
 import numpy as np
-import random
 import os
 import tensorflow as tf
 
@@ -123,7 +122,7 @@ class DeepQNetwork:
     def inference(self, screens):
         y = self.sess.run([self.y], {self.x: screens})
         q_values = np.squeeze(y)
-		return np.argmax(q_values)
+        return np.argmax(q_values)
         
     def train(self, batch):
         
