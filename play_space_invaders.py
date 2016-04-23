@@ -138,7 +138,7 @@ def evalEpoch():
     episode = 0
     frameStart = ale.getFrameNumber()
     totalScore = 0
-    while ale.getFrameNumber() - frameStart < 125000:
+    while ale.getFrameNumber() - frameStart < 60000:
     
         startTime = lastLogTime = time.time()
 
