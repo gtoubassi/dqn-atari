@@ -71,7 +71,7 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
                 state = None
 
         episodeTime = time.time() - startTime
-        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' % (epochType, environment.getGameCount(), environment.getGameScore(), environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
+        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' % ('Episode' if isTraining else 'Eval', environment.getGameCount(), environment.getGameScore(), environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
         environment.resetGame()
         epochTotalScore += environment.getGameScore()
     return epochTotalScore / (environment.getGameCount() - startGameCount)
