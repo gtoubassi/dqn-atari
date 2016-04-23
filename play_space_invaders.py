@@ -62,7 +62,7 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
                 action = random.randrange(environment.getNumActions())
             else:
                 screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
-                action = self.inference(screens)
+                action = dqn.inference(screens)
 
             # Make the move
             oldState = state
