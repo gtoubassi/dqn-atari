@@ -124,7 +124,7 @@ class DeepQNetwork:
               print('Loading from model file %s' % (modelFile))
               self.saver.restore(self.sess, modelFile)
 
-    def chooseAction(self, state):
+    def chooseAction(self, state, overrideEpsilon=None):
         self.actionCount += 1
         
         futureReward = 0
@@ -136,11 +136,13 @@ class DeepQNetwork:
             # e-greedy selection
             # Per dqn paper we anneal epsilon from 1 to .1 over the first 1e6 frames and
             # then .1 thereafter (??)
-            if self.evalEpsilon is None:
-                epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
-            else:
+            if overrideEpsilon is not None:
+                epsilon = overrideEpsilon
+            elif self.evalEpsilon is not None:
                 epsilon = self.evalEpsilon
-                
+            else:
+                epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
+            print(epsilon)
             if random.random() > (1 - epsilon):
                 nextAction = random.randrange(self.numActions)
             else:
