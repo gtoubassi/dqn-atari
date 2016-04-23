@@ -13,7 +13,7 @@ from ale_python_interface import ALEInterface
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--train-epoch-frames", type=int, default=250000, help="how many frames to run during a training epoch (approx -- will finish current game)")
-parser.add_argument("--eval-epoch-frames", type=int, default=60000, help="how many frames to run during an eval epoch (approx -- will finish current game)")
+parser.add_argument("--eval-epoch-frames", type=int, default=100000, help="how many frames to run during an eval epoch (approx -- will finish current game)")
 parser.add_argument("--replay-capacity", type=int, default=1000000, help="how many states to store for future training")
 parser.add_argument("--frame-sample-freq", type=int, default=4, help="how often to sample frames into the state")
 parser.add_argument("--training-freq", type=int, default=4, help="how often (in frames) to train the network")
