@@ -51,16 +51,23 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
 
         while not environment.isGameOver():
       
+            # Choose next action
             if evalWithEpsilon is None:
                 epsilon = max(.1, 1.0 - 0.9 * environment.getFrameNumber() / 1e6)
             else:
                 epsilon = evalWithEpsilon
 
-            action, futureReward = dqn.chooseAction(environment.getState(), epsilon)
+            if random.random() > (1 - epsilon):
+                action = random.randrange(self.numActions)
+            else:
+                screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
+                action = self.inference(screens)
 
+            # Make the move
             oldState = state
             reward, state, isTerminal = environment.step(action)
 
+            # Train
             if isTraining and oldState is not None:
                 clippedReward = min(1, max(-1, reward))
                 replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, isTerminal))

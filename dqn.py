@@ -120,19 +120,10 @@ class DeepQNetwork:
               print('Loading from model file %s' % (args.model))
               self.saver.restore(self.sess, args.model)
 
-    def chooseAction(self, state, epsilon):
-        futureReward = 0
-        
-        if random.random() > (1 - epsilon):
-            nextAction = random.randrange(self.numActions)
-        else:
-            screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
-            best_action_tensor, y_tensor = self.sess.run([self.best_action, self.y], {self.x: screens})
-            #best_action_tensor =  self.best_action.eval(feed_dict={self.x: screens})
-            nextAction = best_action_tensor[0]
-            futureReward = y_tensor[0, nextAction]
-
-        return nextAction, futureReward
+    def inference(self, screens):
+        y = self.sess.run([self.y], {self.x: screens})
+        q_values = np.squeeze(y)
+		return np.argmax(q_values)
         
     def train(self, batch):
         
