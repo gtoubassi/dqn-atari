@@ -27,7 +27,7 @@ class AtariEnvironment:
         self.ale.loadROM(args.rom)
 
         self.actionSet = self.ale.getMinimalActionSet()
-        self.gameCount = 0
+        self.gameNumber = 0
         self.resetGame()
 
     def getNumActions(self):
@@ -36,8 +36,8 @@ class AtariEnvironment:
     def getState(self):
         return self.state
     
-    def getGameCount(self):
-        return self.gameCount
+    def getGameNumber(self):
+        return self.gameNumber
     
     def getFrameNumber(self):
         return self.ale.getFrameNumber()
@@ -67,8 +67,8 @@ class AtariEnvironment:
                 isTerminal = 1
                 break
 
-            if self.gameCount % self.screenCaptureFrequency == 0:
-                dir = self.outputDir + '/screen_cap/game-%06d' % (self.gameCount)
+            if self.gameNumber % self.screenCaptureFrequency == 0:
+                dir = self.outputDir + '/screen_cap/game-%06d' % (self.gameNumber)
                 if not os.path.isdir(dir):
                     os.makedirs(dir)
                 self.ale.saveScreenPNG(dir + '/frame-%06d.png' % (self.getEpisodeFrameNumber()))
@@ -81,7 +81,7 @@ class AtariEnvironment:
 
     def resetGame(self):
         if self.ale.game_over():
-            self.gameCount += 1
+            self.gameNumber += 1
         self.ale.reset_game()
         self.state = State().stateByAddingScreen(self.ale.getScreenRGB(), self.ale.getFrameNumber())
         self.gameScore = 0

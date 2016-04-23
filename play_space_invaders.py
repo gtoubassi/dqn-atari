@@ -40,7 +40,7 @@ replayMemory = replay.ReplayMemory(replayMemoryCapacity)
 def runEpoch(minEpochFrames, evalWithEpsilon=None):
     frameStart = environment.getFrameNumber()
     isTraining = True if evalWithEpsilon is None else False
-    startGameCount = environment.getGameCount()
+    startGameNumber = environment.getGameNumber()
     epochTotalScore = 0
 
     while environment.getFrameNumber() - frameStart < minEpochFrames:
@@ -51,7 +51,12 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
 
         while not environment.isGameOver():
       
-            action, futureReward = dqn.chooseAction(environment.getState(), overrideEpsilon=evalWithEpsilon)
+            if evalWithEpsilon is None:
+                epsilon = max(.1, 1.0 - 0.9 * environment.getFrameNumber() / 1e6)
+            else:
+                epsilon = evalWithEpsilon
+
+            action, futureReward = dqn.chooseAction(environment.getState(), epsilon)
 
             oldState = state
             reward, state, isTerminal = environment.step(action)
@@ -71,11 +76,10 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
                 state = None
 
         episodeTime = time.time() - startTime
-        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' % ('Episode' if isTraining else 'Eval', environment.getGameCount(), environment.getGameScore(), environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
-        environment.resetGame()
+        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' % ('Episode' if isTraining else 'Eval', environment.getGameNumber(), environment.getGameScore(), environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
         epochTotalScore += environment.getGameScore()
-    return epochTotalScore / (environment.getGameCount() - startGameCount)
-    
+        environment.resetGame()
+    return epochTotalScore / (environment.getGameNumber() - startGameNumber)
 
 
 while True:

@@ -32,7 +32,6 @@ class DeepQNetwork:
         self.saveModelFrequency = args.save_model_freq
         self.targetModelUpdateFrequency = args.target_model_update_freq
         
-        self.actionCount = 0
         self.batchCount = 0
         # 250k environment steps is the same as 1e6 game frames
         self.annealingPeriod = 250000 if args.model is None else 0
@@ -121,19 +120,9 @@ class DeepQNetwork:
               print('Loading from model file %s' % (args.model))
               self.saver.restore(self.sess, args.model)
 
-    def chooseAction(self, state, overrideEpsilon=None):
-        self.actionCount += 1
-        
+    def chooseAction(self, state, epsilon):
         futureReward = 0
         
-        # e-greedy selection
-        # Per dqn paper we anneal epsilon from 1 to .1 over the first 1e6 frames and
-        # then .1 thereafter (??)
-        if overrideEpsilon is not None:
-            epsilon = overrideEpsilon
-        else:
-            epsilon = (1.0 - 0.9 * self.actionCount / self.annealingPeriod) if self.actionCount < self.annealingPeriod else .1
-
         if random.random() > (1 - epsilon):
             nextAction = random.randrange(self.numActions)
         else:
