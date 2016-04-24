@@ -21,6 +21,7 @@ parser.add_argument("--observation-frames", type=int, default=50000, help="train
 parser.add_argument("--learning-rate", type=float, default=0.00025, help="learning rate (step size for optimization algo)")
 parser.add_argument("--target-model-update-freq", type=int, default=10000, help="how often to snapshot the model to update the target network during training (per nature paper)")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
+parser.add_argument("--use-qproxy", action='store_true', help="use the q_network from deep_rl_ale for testing")
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
 
@@ -36,8 +37,11 @@ os.makedirs(baseOutputDir)
 
 environment = AtariEnvironment(args, baseOutputDir)
 
-dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
-#dqn = DeepQNetworkProxy(environment.getNumActions(), args)
+if args.use_qproxy:
+    dqn = DeepQNetworkProxy(environment.getNumActions(), args)
+else:
+    dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
+
 replayMemory = replay.ReplayMemory(replayMemoryCapacity)
 
 def runEpoch(minEpochFrames, evalWithEpsilon=None):

@@ -2,15 +2,14 @@ import numpy as np
 import os
 import tensorflow as tf
 from q_network import QNetwork
-
-class DumbKeyValue(object): pass
+from argparse import Namespace
 
 class DeepQNetworkProxy:
     def __init__(self, numActions, args):
 
         tf.set_random_seed(123456)
 
-        a = DumbKeyValue()
+        a = Namespace()
         a.agent_name = 'dq'
         a.agent_type = 'dq'
 
@@ -52,5 +51,6 @@ class DeepQNetworkProxy:
         action = [onehot[sample.action] for sample in batch]
         reward = [sample.reward for sample in batch]
         state2 = [sample.state2.getScreens() for sample in batch]
-        terminal = [sample.terminal for sample in batch]
+        # q_network needs *inverted* terminal states since it multiples this directly by the next states q value
+        terminal = [0 if sample.terminal else 1 for sample in batch]
         self.qnetwork.train(state1, action, reward, state2, terminal)
