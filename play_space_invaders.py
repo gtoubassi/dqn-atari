@@ -36,8 +36,8 @@ os.makedirs(baseOutputDir)
 
 environment = AtariEnvironment(args, baseOutputDir)
 
-#dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
-dqn = DeepQNetworkProxy(environment.getNumActions(), args)
+dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
+#dqn = DeepQNetworkProxy(environment.getNumActions(), args)
 replayMemory = replay.ReplayMemory(replayMemoryCapacity)
 
 def runEpoch(minEpochFrames, evalWithEpsilon=None):

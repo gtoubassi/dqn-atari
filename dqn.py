@@ -43,50 +43,54 @@ class DeepQNetwork:
           self.sess = tf.Session()
 
           # First layer takes a screen, and shrinks by 2x
-          self.x = tf.placeholder(tf.uint8, shape=[None, 84, 84, 4])
+          self.x = tf.placeholder(tf.uint8, shape=[None, 84, 84, 4], name="screens")
           print('x %s %s' % (self.x.get_shape(), self.x.dtype))
 
           x_normalized = tf.to_float(self.x) / 255.0
           print('x_normalized %s %s' % (x_normalized.get_shape(), x_normalized.dtype))
 
           # Second layer convolves 32 8x8 filters with stride 4 with relu
-          W_conv1 = tf.Variable(tf.truncated_normal([8, 8, 4, 32], stddev=0.01))
-          b_conv1 = tf.Variable(tf.fill([32], 0.1))
-          
-          h_conv1 = tf.nn.relu(tf.nn.conv2d(x_normalized, W_conv1, strides=[1, 4, 4, 1], padding='SAME') + b_conv1)
-          print('h_conv1 %s' % (h_conv1.get_shape()))
+          with tf.variable_scope("cnn1"):
+              W_conv1 = tf.Variable(tf.truncated_normal([8, 8, 4, 32], stddev=0.01), name="W_conv1")
+              b_conv1 = tf.Variable(tf.fill([32], 0.1), name="b_conv1")
+
+              h_conv1 = tf.nn.relu(tf.nn.conv2d(x_normalized, W_conv1, strides=[1, 4, 4, 1], padding='VALID') + b_conv1, name="h_conv1")
+              print('h_conv1 %s' % (h_conv1.get_shape()))
           
           # Third layer convolves 64 4x4 filters with stride 2 with relu
-          W_conv2 = tf.Variable(tf.truncated_normal([4, 4, 32, 64], stddev=0.01))
-          b_conv2 = tf.Variable(tf.fill([64], 0.1))
+          with tf.variable_scope("cnn2"):
+              W_conv2 = tf.Variable(tf.truncated_normal([4, 4, 32, 64], stddev=0.01), name="W_conv2")
+              b_conv2 = tf.Variable(tf.fill([64], 0.1), name="b_conv2")
           
-          h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, W_conv2, strides=[1, 2, 2, 1], padding='SAME') + b_conv2)
-          print('h_conv2 %s' % (h_conv2.get_shape()))
+              h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, W_conv2, strides=[1, 2, 2, 1], padding='VALID') + b_conv2, name="h_conv2")
+              print('h_conv2 %s' % (h_conv2.get_shape()))
           
           # Fourth layer convolves 64 3x3 filters with stride 1 with relu
-          W_conv3 = tf.Variable(tf.truncated_normal([3, 3, 64, 64], stddev=0.01))
-          b_conv3 = tf.Variable(tf.fill([64], 0.1))
+          with tf.variable_scope("cnn3"):
+              W_conv3 = tf.Variable(tf.truncated_normal([3, 3, 64, 64], stddev=0.01), name="W_conv3")
+              b_conv3 = tf.Variable(tf.fill([64], 0.1), name="b_conv3")
           
-          h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding='SAME') + b_conv3)
-          print('h_conv3 %s' % (h_conv3.get_shape()))
+              h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding='VALID') + b_conv3, name="h_conv3")
+              print('h_conv3 %s' % (h_conv3.get_shape()))
           
-          # Fifth layer is fully connected with 512 relu units
-          W_fc1 = tf.Variable(tf.truncated_normal([11 * 11 * 64, 512], stddev=0.01))
-          b_fc1 = tf.Variable(tf.fill([512], 0.1))
-          
-          h_conv3_flat = tf.reshape(h_conv3, [-1, 11 * 11 * 64])
+          h_conv3_flat = tf.reshape(h_conv3, [-1, 7 * 7 * 64], name="h_conv3_flat")
           print('h_conv3_flat %s' % (h_conv3_flat.get_shape()))
-          
-          h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
-          print('h_fc1 %s' % (h_fc1.get_shape()))
+
+          # Fifth layer is fully connected with 512 relu units
+          with tf.variable_scope("fc1"):
+              W_fc1 = tf.Variable(tf.truncated_normal([7 * 7 * 64, 512], stddev=0.01), name="W_fc1")
+              b_fc1 = tf.Variable(tf.fill([512], 0.1), name="b_fc1")
+                    
+              h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1, name="h_fc1")
+              print('h_fc1 %s' % (h_fc1.get_shape()))
           
           # Sixth (Output) layer is fully connected linear layer
-          W_fc2 = tf.Variable(tf.truncated_normal([512, numActions], stddev=0.01))
-          b_fc2 = tf.Variable(tf.fill([numActions], 0.1))
+          with tf.variable_scope("fc2"):
+              W_fc2 = tf.Variable(tf.truncated_normal([512, numActions], stddev=0.01), name="W_fc2")
+              b_fc2 = tf.Variable(tf.fill([numActions], 0.1), name="b_fc2")
           
-          self.y = tf.matmul(h_fc1, W_fc2) + b_fc2
-          print('y %s' % (self.y.get_shape()))
-          self.best_action = tf.argmax(self.y, 1)
+              self.y = tf.matmul(h_fc1, W_fc2) + b_fc2
+              print('y %s' % (self.y.get_shape()))
 
           self.a = tf.placeholder(tf.float32, shape=[None, numActions])
           print('a %s' % (self.a.get_shape()))
@@ -114,6 +118,8 @@ class DeepQNetwork:
 
           # Initialize variables
           self.sess.run(tf.initialize_all_variables())
+
+          self.summary_writer = tf.train.SummaryWriter(self.baseDir + '/tensorboard', self.sess.graph_def)
 
           if args.model is not None:
               print('Loading from model file %s' % (args.model))

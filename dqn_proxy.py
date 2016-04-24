@@ -8,6 +8,8 @@ class DumbKeyValue(object): pass
 class DeepQNetworkProxy:
     def __init__(self, numActions, args):
 
+        tf.set_random_seed(123456)
+
         a = DumbKeyValue()
         a.agent_name = 'dq'
         a.agent_type = 'dq'
