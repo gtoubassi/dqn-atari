@@ -45,6 +45,9 @@ class AtariEnvironment:
     def getEpisodeFrameNumber(self):
         return self.ale.getEpisodeFrameNumber()
     
+    def getEpisodeStepNumber(self):
+        return self.episodeStepNumber
+    
     def getGameScore(self):
         return self.gameScore
 
@@ -55,6 +58,7 @@ class AtariEnvironment:
         previousLives = self.ale.lives()
         reward = 0
         isTerminal = 0
+        self.episodeStepNumber += 1
         
         for i in range(4):
             prevScreenRGB = self.ale.getScreenRGB()
@@ -85,3 +89,4 @@ class AtariEnvironment:
         self.ale.reset_game()
         self.state = State().stateByAddingScreen(self.ale.getScreenRGB(), self.ale.getFrameNumber())
         self.gameScore = 0
+        self.episodeStepNumber = 0 # environment steps vs ALE frames.  Will probably be 4*frame number

@@ -55,6 +55,7 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
         startTime = lastLogTime = time.time()
         stateReward = 0
         state = None
+        interestingStepCount = 0
 
         while not environment.isGameOver():
       
@@ -73,6 +74,9 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
             # Make the move
             oldState = state
             reward, state, isTerminal = environment.step(action)
+            
+            if reward != 0 or isTerminal:
+                interestingStepCount += 1
 
             # Train
             if isTraining and oldState is not None:
@@ -90,7 +94,10 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
                 state = None
 
         episodeTime = time.time() - startTime
-        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' % ('Episode' if isTraining else 'Eval', environment.getGameNumber(), environment.getGameScore(), environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
+        print('%s %d ended with score: %d (%d frames in %fs for %d fps %f interesting)' %
+            ('Episode' if isTraining else 'Eval', environment.getGameNumber(), environment.getGameScore(),
+            environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime,
+            float(interestingStepCount)/environment.getEpisodeStepNumber()))
         epochTotalScore += environment.getGameScore()
         environment.resetGame()
     return epochTotalScore / (environment.getGameNumber() - startGameNumber)
