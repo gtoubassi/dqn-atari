@@ -82,7 +82,8 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
             if isTraining and oldState is not None:
                 clippedReward = min(1, max(-1, reward))
                 replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, isTerminal))
-                if environment.getFrameNumber() > minObservationFrames:
+
+                if environment.getFrameNumber() > minObservationFrames and environment.getEpisodeStepNumber() % 4 == 0:
                     batch = replayMemory.drawBatch(32)
                     dqn.train(batch)
         
