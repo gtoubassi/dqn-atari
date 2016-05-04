@@ -32,8 +32,6 @@ class DeepQNetwork:
         self.targetModelUpdateFrequency = args.target_model_update_freq
         
         self.batchCount = 0
-        # 250k environment steps is the same as 1e6 game frames
-        self.annealingPeriod = 250000 if args.model is None else 0
         self.staleSess = None
 
         tf.set_random_seed(123456)

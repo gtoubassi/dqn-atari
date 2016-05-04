@@ -28,6 +28,7 @@ class AtariEnvironment:
 
         self.actionSet = self.ale.getMinimalActionSet()
         self.gameNumber = 0
+        self.stepNumber = 0
         self.resetGame()
 
     def getNumActions(self):
@@ -48,6 +49,9 @@ class AtariEnvironment:
     def getEpisodeStepNumber(self):
         return self.episodeStepNumber
     
+    def getStepNumber(self):
+        return self.stepNumber
+    
     def getGameScore(self):
         return self.gameScore
 
@@ -58,6 +62,7 @@ class AtariEnvironment:
         previousLives = self.ale.lives()
         reward = 0
         isTerminal = 0
+        self.stepNumber += 1
         self.episodeStepNumber += 1
         
         for i in range(4):
