@@ -12,8 +12,8 @@ from dqn_proxy import DeepQNetworkProxy
 from atari_environment import AtariEnvironment
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--train-epoch-frames", type=int, default=500000, help="how many frames to run during a training epoch (approx -- will finish current game)")
-parser.add_argument("--eval-epoch-frames", type=int, default=100000, help="how many frames to run during an eval epoch (approx -- will finish current game)")
+parser.add_argument("--train-epoch-frames", type=int, default=250000, help="how many frames to run during a training epoch (approx -- will finish current game)")
+parser.add_argument("--eval-epoch-frames", type=int, default=125000, help="how many frames to run during an eval epoch (approx -- will finish current game)")
 parser.add_argument("--replay-capacity", type=int, default=1000000, help="how many states to store for future training")
 parser.add_argument("--screen-capture-freq", type=int, default=250, help="record screens for a game this often")
 parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
