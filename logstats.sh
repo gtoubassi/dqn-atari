@@ -39,7 +39,9 @@ grep Episode $1 | tail -1000 | awk '{print $6}' | awk '{SUM=SUM+$1;COUNT=COUNT+1
 echo -n "Average score for ALL:  "
 grep Episode $1 | awk '{print $6}' | awk '{SUM=SUM+$1;COUNT=COUNT+1} END{print SUM/COUNT}'
 
-echo
-echo "Best scores ever:"
-grep Episode $1 | awk '{print $6}' | sort -n | tail -5 
+echo -n "Best scores ever: "
+grep Episode $1 | awk '{print $6}' | sort -n | tail -5 | sort -rn | tr  '\n' ',' | sed 's#,$#\n#g' | sed 's#,#, #g'
+
+echo -n "Recent eval runs: "
+grep Average.eval $1 | tail -5 | awk '{print $NF}' | tr  '\n' ',' | sed 's#,$#\n#g' | sed 's#,#, #g'
 
