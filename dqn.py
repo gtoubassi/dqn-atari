@@ -154,9 +154,6 @@ class DeepQNetwork:
         
         self.batchCount += 1 # Increment first so we don't save the model on the first run through
 
-        # Use a stale session to evaluate to improve stability per nature paper (I dont deeply understand this (??))
-        #evalSess = self.sess if self.staleSess is None else self.staleSess
-
         x2 = [b.state2.getScreens() for b in batch]
         y2 = self.y_target.eval(feed_dict={self.x_target: x2}, session=self.sess)
 
