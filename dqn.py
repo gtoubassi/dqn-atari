@@ -52,7 +52,6 @@ class DeepQNetwork:
         all_variables = tf.all_variables()
         for i in range(0, len(trainable_variables)):
 			self.update_target.append(all_variables[len(trainable_variables) + i].assign(trainable_variables[i]))
-            
 
         self.a = tf.placeholder(tf.float32, shape=[None, numActions])
         print('a %s' % (self.a.get_shape()))
