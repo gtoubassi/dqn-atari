@@ -13,14 +13,14 @@ from atari_environment import AtariEnvironment
 from state import State
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--train-epoch-frames", type=int, default=250000, help="how many frames to run during a training epoch (approx -- will finish current game)")
-parser.add_argument("--eval-epoch-frames", type=int, default=125000, help="how many frames to run during an eval epoch (approx -- will finish current game)")
+parser.add_argument("--train-epoch-steps", type=int, default=250000, help="how many steps (=4 frames) to run during a training epoch (approx -- will finish current game)")
+parser.add_argument("--eval-epoch-steps", type=int, default=125000, help="how many steps (=4 frames) to run during an eval epoch (approx -- will finish current game)")
 parser.add_argument("--replay-capacity", type=int, default=1000000, help="how many states to store for future training")
 parser.add_argument("--compress-replay", action='store_true', help="if set replay memory will be compressed with blosc, allowing much larger replay capacity")
 parser.add_argument("--normalize-weights", action='store_true', help="if set weights/biases are normalized like torch, with std scaled by fan in to the node")
 parser.add_argument("--screen-capture-freq", type=int, default=250, help="record screens for a game this often")
 parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
-parser.add_argument("--observation-frames", type=int, default=50000, help="train only after this many frames")
+parser.add_argument("--observation-steps", type=int, default=50000, help="train only after this many stesp (=4 frames)")
 parser.add_argument("--learning-rate", type=float, default=0.00025, help="learning rate (step size for optimization algo)")
 parser.add_argument("--target-model-update-freq", type=int, default=10000, help="how often to snapshot the model to update the target network during training (per nature paper)")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
@@ -28,10 +28,10 @@ parser.add_argument("--use-qproxy", action='store_true', help="use the q_network
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
 
-trainEpochFrames = args.train_epoch_frames
-evalEpochFrames = args.eval_epoch_frames
+trainEpochSteps = args.train_epoch_steps
+evalEpochSteps = args.eval_epoch_steps
 replayMemoryCapacity = args.replay_capacity
-minObservationFrames = args.observation_frames
+minObservationSteps = args.observation_steps
 
 print 'Arguments: %s' % (args)
 
@@ -49,13 +49,13 @@ else:
 
 replayMemory = replay.ReplayMemory(replayMemoryCapacity)
 
-def runEpoch(minEpochFrames, evalWithEpsilon=None):
-    frameStart = environment.getFrameNumber()
+def runEpoch(minEpochSteps, evalWithEpsilon=None):
+    stepStart = environment.getStepNumber()
     isTraining = True if evalWithEpsilon is None else False
     startGameNumber = environment.getGameNumber()
     epochTotalScore = 0
 
-    while environment.getFrameNumber() - frameStart < minEpochFrames:
+    while environment.getStepNumber() - stepStart < minEpochSteps:
     
         startTime = lastLogTime = time.time()
         stateReward = 0
@@ -88,7 +88,7 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
                 clippedReward = min(1, max(-1, reward))
                 replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, isTerminal))
 
-                if environment.getFrameNumber() > minObservationFrames and environment.getEpisodeStepNumber() % 4 == 0:
+                if environment.getStepNumber() > minObservationSteps and environment.getEpisodeStepNumber() % 4 == 0:
                     batch = replayMemory.drawBatch(32)
                     dqn.train(batch)
         
@@ -110,7 +110,7 @@ def runEpoch(minEpochFrames, evalWithEpsilon=None):
 
 
 while True:
-    aveScore = runEpoch(trainEpochFrames) #train
+    aveScore = runEpoch(trainEpochSteps) #train
     print('Average training score: %d' % (aveScore))
-    aveScore = runEpoch(evalEpochFrames, evalWithEpsilon=.05) #eval
+    aveScore = runEpoch(trainEpochSteps, evalWithEpsilon=.05) #eval
     print('Average eval score: %d' % (aveScore))
