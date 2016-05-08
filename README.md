@@ -19,8 +19,13 @@ More results to follow...
 3. Download a game rom, and name it properly like space_invaders.bin (all lower case ending in bin -- the names must match for ALE).
 4. `git clone https://github.com/gtoubassi/dqn-atari.git`
 5. Run it!  The default parameters attempt to mimic the Nature paper configuration:
+
     cd dqn-atari
-	python ./play_atari.py ~/space_invaders.bin
+	python ./play_atari.py ~/space_invaders.bin | tee train.log
+
+6. Periodically check progress
+
+    ./logstats.sh train.log
 
 ### References
 
