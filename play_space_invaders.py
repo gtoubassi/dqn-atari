@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--train-epoch-steps", type=int, default=250000, help="how many steps (=4 frames) to run during a training epoch (approx -- will finish current game)")
 parser.add_argument("--eval-epoch-steps", type=int, default=125000, help="how many steps (=4 frames) to run during an eval epoch (approx -- will finish current game)")
 parser.add_argument("--replay-capacity", type=int, default=1000000, help="how many states to store for future training")
+parser.add_argument("--prioritized-replay", action='store_true', help="Prioritize interesting states when training (e.g. terminal or non zero rewards)")
 parser.add_argument("--compress-replay", action='store_true', help="if set replay memory will be compressed with blosc, allowing much larger replay capacity")
 parser.add_argument("--normalize-weights", action='store_true', help="if set weights/biases are normalized like torch, with std scaled by fan in to the node")
 parser.add_argument("--screen-capture-freq", type=int, default=250, help="record screens for a game this often")
@@ -30,7 +31,6 @@ args = parser.parse_args()
 
 trainEpochSteps = args.train_epoch_steps
 evalEpochSteps = args.eval_epoch_steps
-replayMemoryCapacity = args.replay_capacity
 minObservationSteps = args.observation_steps
 
 print 'Arguments: %s' % (args)
@@ -47,7 +47,7 @@ if args.use_qproxy:
 else:
     dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
 
-replayMemory = replay.ReplayMemory(replayMemoryCapacity)
+replayMemory = replay.ReplayMemory(args)
 
 def runEpoch(minEpochSteps, evalWithEpsilon=None):
     stepStart = environment.getStepNumber()
@@ -60,8 +60,7 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
         startTime = lastLogTime = time.time()
         stateReward = 0
         state = None
-        interestingStepCount = 0
-
+        
         while not environment.isGameOver():
       
             # Choose next action
@@ -80,9 +79,6 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
             oldState = state
             reward, state, isTerminal = environment.step(action)
             
-            if reward != 0 or isTerminal:
-                interestingStepCount += 1
-
             # Train
             if isTraining and oldState is not None:
                 clippedReward = min(1, max(-1, reward))
@@ -100,10 +96,9 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
                 state = None
 
         episodeTime = time.time() - startTime
-        print('%s %d ended with score: %d (%d frames in %fs for %d fps %f interesting)' %
+        print('%s %d ended with score: %d (%d frames in %fs for %d fps)' %
             ('Episode' if isTraining else 'Eval', environment.getGameNumber(), environment.getGameScore(),
-            environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime,
-            float(interestingStepCount)/environment.getEpisodeStepNumber()))
+            environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
         epochTotalScore += environment.getGameScore()
         environment.resetGame()
     return epochTotalScore / (environment.getGameNumber() - startGameNumber)
