@@ -20,12 +20,12 @@ More results to follow...
 4. `git clone https://github.com/gtoubassi/dqn-atari.git`
 5. Run it!  The default parameters attempt to mimic the Nature paper configuration:
 
-    `cd dqn-atari`
-	`python ./play_atari.py ~/space_invaders.bin | tee train.log`
+        cd dqn-atari
+	    python ./play_atari.py ~/space_invaders.bin | tee train.log
 
 6. Periodically check progress
 
-    `./logstats.sh train.log`
+        ./logstats.sh train.log
 
 ### References
 
