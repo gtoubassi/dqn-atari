@@ -14,7 +14,7 @@ More results to follow...
 
 ### Running
 
-1. Get Python and Tensorflow running, preferably on a GPU (see 'Running on AWS' below).
+1. Get Python and Tensorflow running, preferably on a GPU (see notes on AWS setup  [here](https://github.com/gtoubassi/dqn-atari/wiki/Setting-up-TensorFlow-on-AWS-GPU).
 2. Install the arcade learning environment (see [wiki](https://github.com/gtoubassi/dqn-atari/wiki/Installing-ALE))
 3. Download a game rom, and name it properly like space_invaders.bin (all lower case ending in bin -- the names must match for ALE).
 4. Get the repo:
@@ -35,11 +35,8 @@ More results to follow...
 The following were very helpful:
 
 * [Overview of Deep Q Learning](http://www.nervanasys.com/demystifying-deep-reinforcement-learning/)
+* David Silver's [Introduction to Reinforcement Learning](https://www.youtube.com/watch?v=2pWv7GOvuf0&list=PL5X3mDkKaJrL42i_jhE4N-p6E2Ol62Ofa)
 * [deep_rl_ale](https://github.com/Jabberwockyll/deep_rl_ale)
 * [Flabbybird agent using TensorFlow](https://github.com/yenchenlin1994/DeepLearningFlappyBird)
 * [Space Invaders using Theano](http://maciejjaskowski.github.io/2016/03/09/space-invaders.html)
 * [Deep Q Learning Google Group](https://groups.google.com/forum/#!forum/deep-q-learning)
-
-### Running on AWS
-
-Details on how to get TensorFlow set up on AWS GPU instances can be found [here](https://github.com/gtoubassi/dqn-atari/wiki/Setting-up-TensorFlow-on-AWS-GPU)
