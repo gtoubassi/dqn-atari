@@ -60,13 +60,20 @@ class ReplayMemory:
         # premature optimizastion alert :-), don't truncate on each
         # added sample since (I assume) it requires a memcopy of the list (probably 8mb)
         if len(self.samples) > self.maxSamples * 1.05:
-            # Before truncating the list, correct self.numInterestingSamples
+            truncatedWeight = 0
+            # Before truncating the list, correct self.numInterestingSamples, and prepare
+            # for correcting the cumulativeWeights of the remaining samples
             for i in range(self.maxSamples, len(self.samples)):
+                truncatedWeight += self.samples[i].weight
                 if self.samples[i].isInteresting():
                     self.numInterestingSamples -= 1
 
             # Truncate the list
             self.samples = self.samples[(len(self.samples) - self.maxSamples):]
+            
+            # Correct cumulativeWeights
+            for sample in self.samples:
+                sample.cumulativeWeight -= truncatedWeight
     
     def drawBatch(self, batchSize):
         if batchSize > len(self.samples):
