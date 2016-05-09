@@ -8,7 +8,6 @@ import replay
 import time
 import argparse
 import dqn
-from dqn_proxy import DeepQNetworkProxy
 from atari_environment import AtariEnvironment
 from state import State
 
