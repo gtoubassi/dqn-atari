@@ -8,6 +8,7 @@ import replay
 import time
 import argparse
 import dqn
+from dqn_proxy import DeepQNetworkProxy
 from atari_environment import AtariEnvironment
 from state import State
 
@@ -26,10 +27,6 @@ parser.add_argument("--target-model-update-freq", type=int, default=10000, help=
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
-
-trainEpochSteps = args.train_epoch_steps
-evalEpochSteps = args.eval_epoch_steps
-minObservationSteps = args.observation_steps
 
 print 'Arguments: %s' % (args)
 
@@ -74,12 +71,12 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
             oldState = state
             reward, state, isTerminal = environment.step(action)
             
-            # Train
+            # Record experience in replay memory and train
             if isTraining and oldState is not None:
                 clippedReward = min(1, max(-1, reward))
                 replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, isTerminal))
 
-                if environment.getStepNumber() > minObservationSteps and environment.getEpisodeStepNumber() % 4 == 0:
+                if environment.getStepNumber() > args.observation_steps and environment.getEpisodeStepNumber() % 4 == 0:
                     batch = replayMemory.drawBatch(32)
                     dqn.train(batch)
         
@@ -96,11 +93,13 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
             environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
         epochTotalScore += environment.getGameScore()
         environment.resetGame()
+    
+    # return the average score
     return epochTotalScore / (environment.getGameNumber() - startGameNumber)
 
 
 while True:
-    aveScore = runEpoch(trainEpochSteps) #train
+    aveScore = runEpoch(args.train_epoch_steps) #train
     print('Average training score: %d' % (aveScore))
-    aveScore = runEpoch(trainEpochSteps, evalWithEpsilon=.05) #eval
+    aveScore = runEpoch(args.eval_epoch_steps, evalWithEpsilon=.05) #eval
     print('Average eval score: %d' % (aveScore))
