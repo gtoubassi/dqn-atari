@@ -1,4 +1,7 @@
+import blosc
 import numpy as np
+import scipy.ndimage as ndimage
+import blosc
 import os
 import random
 from state import State
@@ -16,6 +19,8 @@ class AtariEnvironment:
         
         self.outputDir = outputDir
         self.screenCaptureFrequency = args.screen_capture_freq
+        self.useCompression = args.compress_screens
+        self.currentScreenBatch = None
         
         self.ale = ALEInterface()
         self.ale.setInt(b'random_seed', 123456)
@@ -83,7 +88,7 @@ class AtariEnvironment:
                 self.ale.saveScreenPNG(dir + '/frame-%06d.png' % (self.getEpisodeFrameNumber()))
 
 
-        maxedScreen = np.maximum(screenRGB, prevScreenRGB)
+        maxedScreen = self._processFullScreen(np.maximum(screenRGB, prevScreenRGB))
         self.state = self.state.stateByAddingScreen(maxedScreen, self.ale.getFrameNumber())
         self.gameScore += reward
         return reward, self.state, isTerminal
@@ -92,6 +97,78 @@ class AtariEnvironment:
         if self.ale.game_over():
             self.gameNumber += 1
         self.ale.reset_game()
-        self.state = State().stateByAddingScreen(self.ale.getScreenRGB(), self.ale.getFrameNumber())
+        screen = self._processFullScreen(self.ale.getScreenRGB())
+        self.state = State().stateByAddingScreen(screen, self.ale.getFrameNumber())
         self.gameScore = 0
         self.episodeStepNumber = 0 # environment steps vs ALE frames.  Will probably be 4*frame number
+
+    def _processFullScreen(self, screen):
+        screen = np.dot(screen, np.array([.299, .587, .114])).astype(np.uint8)
+        screen = ndimage.zoom(screen, (0.4, 0.525))
+        screen.resize((84, 84, 1))
+        if self.useCompression:
+            if self.currentScreenBatch is None or self.currentScreenBatch.isCompressed:
+                self.currentScreenBatch = CompressedScreenBatch()
+            return CompressedScreenReference(self.currentScreenBatch, screen)
+        else:
+            return SimpleScreenReference(screen)
+
+class SimpleScreenReference:
+
+    def __init__(self, screen):
+        self.screen = screen
+
+    def getPixels(self):
+        return self.screen
+
+
+class CompressedScreenBatch:
+    batchSize = 10
+    currentlyUncompressed = None
+
+    def __init__(self):
+        self.isCompressed = False
+        self.screens = []
+        self.compressed = None
+        self.cache = None
+    
+    def addScreen(self, screen):
+        if self.isCompressed:
+            raise Exception('Cannot add a screen to a batch after it has been compressed')
+        
+        screenId = len(self.screens)
+        self.screens.append(screen)
+        
+        if len(self.screens) == CompressedScreenBatch.batchSize:
+            uncompressed = np.reshape(self.screens, (CompressedScreenBatch.batchSize, 84, 84)).tobytes()
+            self.compressed = blosc.compress(uncompressed, typesize=1)
+            print('%d %d %f' % (len(self.compressed), len(uncompressed), float(len(self.compressed))/len(uncompressed)))
+            self.isCompressed = True
+            self.screens = None
+            
+        return screenId
+
+    def getDecompressedScreen(self, screenId):
+        if self.isCompressed:
+            if self != CompressedScreenBatch.currentlyUncompressed:
+                if CompressedScreenBatch.currentlyUncompressed != None:
+                    CompressedScreenBatch.currentlyUncompressed.cache = None
+                CompressedScreenBatch.currentlyUncompressed = self
+                self.cache = np.reshape(np.fromstring(blosc.decompress(self.compressed), dtype=np.uint8), (CompressedScreenBatch.batchSize, 84, 84))
+            screen = self.cache[screenId,...]
+            screen.resize((84, 84, 1))
+            return screen
+        else:
+            return self.screens[screenId]
+
+class CompressedScreenReference:
+    def __init__(self, batch, screen):
+        self.batch = batch
+        self.origScreen = screen
+        self.screenId = batch.addScreen(screen)
+
+    def getPixels(self):
+        screen = self.batch.getDecompressedScreen(self.screenId)
+        if not np.array_equal(self.origScreen, screen):
+            raise Exception('Arrays didnt match!')
+        return screen
