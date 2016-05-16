@@ -31,7 +31,7 @@ class DeepQNetwork:
         self.baseDir = baseDir
         self.saveModelFrequency = args.save_model_freq
         self.targetModelUpdateFrequency = args.target_model_update_freq
-        self.normalizeWeights = args.normalize_weights
+        self.normalizeWeights = not args.no_normalized_weights
 
         self.batchCount = 0
         self.staleSess = None

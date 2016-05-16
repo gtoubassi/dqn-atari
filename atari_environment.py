@@ -142,7 +142,6 @@ class CompressedScreenBatch:
         if len(self.screens) == CompressedScreenBatch.batchSize:
             uncompressed = np.reshape(self.screens, (CompressedScreenBatch.batchSize, 84, 84)).tobytes()
             self.compressed = blosc.compress(uncompressed, typesize=1)
-            print('%d %d %f' % (len(self.compressed), len(uncompressed), float(len(self.compressed))/len(uncompressed)))
             self.isCompressed = True
             self.screens = None
             
@@ -169,6 +168,4 @@ class CompressedScreenReference:
 
     def getPixels(self):
         screen = self.batch.getDecompressedScreen(self.screenId)
-        if not np.array_equal(self.origScreen, screen):
-            raise Exception('Arrays didnt match!')
         return screen

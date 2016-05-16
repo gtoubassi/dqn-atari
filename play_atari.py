@@ -17,7 +17,7 @@ parser.add_argument("--eval-epoch-steps", type=int, default=125000, help="how ma
 parser.add_argument("--replay-capacity", type=int, default=1000000, help="how many states to store for future training")
 parser.add_argument("--prioritized-replay", action='store_true', help="Prioritize interesting states when training (e.g. terminal or non zero rewards)")
 parser.add_argument("--compress-screens", action='store_true', help="if set screen pixels will be compressed with blosc, allowing much larger replay capacity")
-parser.add_argument("--normalize-weights", action='store_true', default=True, help="if set weights/biases are normalized like torch, with std scaled by fan in to the node")
+parser.add_argument("--no-normalized-weights", action='store_true', help="Disable weights/biases normalization ala torch (with std scaled by fan in to the node)")
 parser.add_argument("--screen-capture-freq", type=int, default=1000, help="record screens for a game this often")
 parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
 parser.add_argument("--observation-steps", type=int, default=50000, help="train only after this many stesp (=4 frames)")
