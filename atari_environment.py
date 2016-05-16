@@ -87,7 +87,6 @@ class AtariEnvironment:
                     os.makedirs(dir)
                 self.ale.saveScreenPNG(dir + '/frame-%06d.png' % (self.getEpisodeFrameNumber()))
 
-
         maxedScreen = self._processFullScreen(np.maximum(screenRGB, prevScreenRGB))
         self.state = self.state.stateByAddingScreen(maxedScreen, self.ale.getFrameNumber())
         self.gameScore += reward
@@ -163,7 +162,6 @@ class CompressedScreenBatch:
 class CompressedScreenReference:
     def __init__(self, batch, screen):
         self.batch = batch
-        self.origScreen = screen
         self.screenId = batch.addScreen(screen)
 
     def getPixels(self):
