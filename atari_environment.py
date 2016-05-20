@@ -4,6 +4,7 @@ import scipy.ndimage as ndimage
 import blosc
 import os
 import random
+import zlib
 from state import State
 from ale_python_interface import ALEInterface
 
@@ -140,7 +141,7 @@ class CompressedScreenBatch:
         
         if len(self.screens) == CompressedScreenBatch.batchSize:
             uncompressed = np.reshape(self.screens, (CompressedScreenBatch.batchSize, 84, 84)).tobytes()
-            self.compressed = blosc.compress(uncompressed, typesize=1)
+            self.compressed = self._compress(uncompressed)
             self.isCompressed = True
             self.screens = None
             
@@ -152,12 +153,20 @@ class CompressedScreenBatch:
                 if CompressedScreenBatch.currentlyUncompressed != None:
                     CompressedScreenBatch.currentlyUncompressed.cache = None
                 CompressedScreenBatch.currentlyUncompressed = self
-                self.cache = np.reshape(np.fromstring(blosc.decompress(self.compressed), dtype=np.uint8), (CompressedScreenBatch.batchSize, 84, 84))
+                self.cache = np.reshape(np.fromstring(self._decompress(self.compressed), dtype=np.uint8), (CompressedScreenBatch.batchSize, 84, 84))
             screen = self.cache[screenId,...]
             screen.resize((84, 84, 1))
             return screen
         else:
             return self.screens[screenId]
+
+    def _compress(self, data):
+        #return blosc.compress(data, typesize=1)
+        return zlib.compress(data, 9)
+
+    def _decompress(self, data):
+        #return blosc.decompress(data)
+        return zlib.decompress(data)
 
 class CompressedScreenReference:
     def __init__(self, batch, screen):

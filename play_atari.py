@@ -27,7 +27,7 @@ parser.add_argument("--model", help="tensorflow model checkpoint file to initial
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
 
-print 'Arguments: %s' % (args)
+print('Arguments: %s' % args)
 
 baseOutputDir = 'game-out-' + time.strftime("%Y-%m-%d-%H-%M-%S")
 os.makedirs(baseOutputDir)
