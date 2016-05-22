@@ -27,7 +27,7 @@ parser.add_argument("--model", help="tensorflow model checkpoint file to initial
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
 
-print 'Arguments: %s' % (args)
+print('Arguments: %s' % (args))
 
 baseOutputDir = 'game-out-' + time.strftime("%Y-%m-%d-%H-%M-%S")
 os.makedirs(baseOutputDir)
@@ -35,6 +35,8 @@ os.makedirs(baseOutputDir)
 State.setup(args)
 
 environment = AtariEnvironment(args, baseOutputDir)
+
+print('Num actions %d' % environment.getNumActions())
 
 dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
 
@@ -60,11 +62,13 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
             else:
                 epsilon = evalWithEpsilon
 
+            if state is not None:
+                screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
+                action, qValues = dqn.inference(screens)
+
             if state is None or random.random() > (1 - epsilon):
                 action = random.randrange(environment.getNumActions())
-            else:
-                screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
-                action = dqn.inference(screens)
+                
 
             # Make the move
             oldState = state
@@ -73,7 +77,7 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
             # Record experience in replay memory and train
             if isTraining and oldState is not None:
                 clippedReward = min(1, max(-1, reward))
-                replayMemory.addSample(replay.Sample(oldState, action, clippedReward, state, isTerminal))
+                replayMemory.addSample(replay.Sample(oldState, qValues, action, clippedReward, state, isTerminal))
 
                 if environment.getStepNumber() > args.observation_steps and environment.getEpisodeStepNumber() % 4 == 0:
                     batch = replayMemory.drawBatch(32)

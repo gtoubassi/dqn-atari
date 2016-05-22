@@ -156,7 +156,7 @@ class DeepQNetwork:
     def inference(self, screens):
         y = self.sess.run([self.y], {self.x: screens})
         q_values = np.squeeze(y)
-        return np.argmax(q_values)
+        return np.argmax(q_values), q_values
         
     def train(self, batch):
         
@@ -181,6 +181,14 @@ class DeepQNetwork:
             self.a: a,
             self.y_: y_
         }, session=self.sess)
+
+        # WARNING THIS IS HAPPENING ALL THE TIME!!!!!!!!!!
+        y1 = np.squeeze(self.sess.run([self.y], {self.x: x}))
+        for i in range(0, len(batch)):
+            batch[i].state1QValues = y1[i]
+            batch[i].state1QValue = y1[i, batch[i].action]
+            batch[i].state2QValue = np.max(y2[i])
+            batch[i].weight = abs(batch[i].state1QValue - batch[i].state2QValue)
 
         if self.batchCount % self.targetModelUpdateFrequency == 0:
 			self.sess.run(self.update_target)
