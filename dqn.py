@@ -187,7 +187,7 @@ class DeepQNetwork:
         for i in range(0, len(batch)):
             batch[i].state1QValues = y1[i]
             batch[i].state1QValue = y1[i, batch[i].action]
-            batch[i].state2QValue = np.max(y2[i])
+            batch[i].state2QValue = np.max(y2[i]) if not batch[i].terminal else 0
             batch[i].weight = abs(batch[i].state1QValue - batch[i].state2QValue)
 
         if self.batchCount % self.targetModelUpdateFrequency == 0:
