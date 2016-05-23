@@ -27,6 +27,7 @@ class ReplayMemory:
         self.maxSamples = args.replay_capacity
         self.prioritizedReplay = args.prioritized_replay
         self.numInterestingSamples = 0
+        self.batchesDrawn = 0
 
     def numSamples():
         return len(self.samples)
@@ -52,7 +53,7 @@ class ReplayMemory:
                     break
                 # This is an exponential that ranges from 3.0 to 1.01 over the domain of [0, uninterestingSampleRange]
                 # So the interesting sample gets a 3x boost, and the one furthest away gets a 1% boost
-                boost = 1.0 + 4.0/(math.exp(i/(uninterestingSampleRange/6.0)))
+                boost = 1.0 + 3.0/(math.exp(i/(uninterestingSampleRange/6.0)))
                 self.samples[index].weight *= boost
                 self.samples[index].cumulativeWeight = self.samples[index].weight + self.samples[index - 1].cumulativeWeight
     
@@ -79,6 +80,8 @@ class ReplayMemory:
         if batchSize > len(self.samples):
             raise IndexError('Too few samples (%d) to draw a batch of %d' % (len(self.samples), batchSize))
         
+        self.batchesDrawn += 1
+        
         if self.prioritizedReplay:
             return self._drawPrioritizedBatch(batchSize)
         else:
@@ -95,9 +98,15 @@ class ReplayMemory:
             probe.cumulativeWeight = random.uniform(0, self.samples[-1].cumulativeWeight)
             index = bisect.bisect_right(self.samples, probe, 0, len(self.samples) - 1)
             sample = self.samples[index]
+            sample.weight = max(1, .8 * sample.weight)
             if sample not in batch:
                 batch.append(sample)
 
+        if self.batchesDrawn % 100 == 0:
+            cumulative = 0
+            for sample in self.samples:
+                cumulative += sample.weight
+                sample.cumulativeWeight = cumulative
         return batch
     
     def _printBatchWeight(self, batch):
