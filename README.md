@@ -6,9 +6,11 @@ While the DeepMind implementation is built in [lua with torch7](https://github.c
 
 ### Results
 
-I have been focused on attempting to match DeepMind's performance on Space Invaders (1976+/-800).  My current results are far short at ~1100 (random agent scores ~150).  Thus far I have not found anyone that has reproduced the DeepMind results using the approach described in the Nature paper.  If you've done it, particularly with TensorFlow, let me know!
+I have been focused on attempting to match DeepMind's performance on Space Invaders (1976+/-800).  My current results are far short at 1139+/-138 (random agent scores ~150).  Thus far I have not found anyone that has reproduced the DeepMind results using the approach described in the Nature paper.  If you've done it, particularly with TensorFlow, let me know!
 
-I have also tried breakout and got a score of 130 but that was an older version with many minor issues (DeepMind reported 400+/-30).
+I have also tried breakout and got a score of 284+/-78 but that was an older version with the wrong target network update frequency. (DeepMind reported 400+/-30).
+
+I have also experimented with compressing experience replay to have larger capacity than 1M.  Both breakout and space invaders show ~10% improvement with 4M and 3M respectively.
 
 A publicly viewable google spreadsheet has [results](https://docs.google.com/spreadsheets/d/1RZM2qhKQaXaud4S2ILsRVukmiPCjM-xtJTuPRpb96HY/edit#gid=2001383367) for various experiments I have run.
 
