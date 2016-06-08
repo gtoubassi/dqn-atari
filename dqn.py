@@ -33,7 +33,6 @@ class DeepQNetwork:
         self.targetModelUpdateFrequency = args.target_model_update_freq
         self.normalizeWeights = args.normalize_weights
 
-        self.batchCount = 0
         self.staleSess = None
 
         tf.set_random_seed(123456)
@@ -158,9 +157,7 @@ class DeepQNetwork:
         q_values = np.squeeze(y)
         return np.argmax(q_values)
         
-    def train(self, batch):
-        
-        self.batchCount += 1 # Increment first so we don't save the model on the first run through
+    def train(self, batch, stepNumber):
 
         x2 = [b.state2.getScreens() for b in batch]
         y2 = self.y_target.eval(feed_dict={self.x_target: x2}, session=self.sess)
@@ -182,17 +179,11 @@ class DeepQNetwork:
             self.y_: y_
         }, session=self.sess)
 
-        if self.batchCount % self.targetModelUpdateFrequency == 0:
+        if stepNumber % self.targetModelUpdateFrequency == 0:
 			self.sess.run(self.update_target)
 
-        if self.batchCount % self.targetModelUpdateFrequency == 0 or self.batchCount % self.saveModelFrequency == 0:
+        if stepNumber % self.targetModelUpdateFrequency == 0 or stepNumber % self.saveModelFrequency == 0:
             dir = self.baseDir + '/models'
             if not os.path.isdir(dir):
                 os.makedirs(dir)
-            savedPath = self.saver.save(self.sess, dir + '/model', global_step=self.batchCount)
-            
-            if False and self.batchCount % self.targetModelUpdateFrequency == 0:
-                if self.staleSess is not None:
-                    self.staleSess.close()
-                self.staleSess = tf.Session()
-                self.saver.restore(self.staleSess, savedPath)
+            savedPath = self.saver.save(self.sess, dir + '/model', global_step=stepNumber)

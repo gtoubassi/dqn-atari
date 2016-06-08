@@ -22,7 +22,7 @@ parser.add_argument("--screen-capture-freq", type=int, default=250, help="record
 parser.add_argument("--save-model-freq", type=int, default=1000, help="save the model once per 1000 training sessions")
 parser.add_argument("--observation-steps", type=int, default=50000, help="train only after this many stesp (=4 frames)")
 parser.add_argument("--learning-rate", type=float, default=0.00025, help="learning rate (step size for optimization algo)")
-parser.add_argument("--target-model-update-freq", type=int, default=10000, help="how often to snapshot the model to update the target network during training (per nature paper)")
+parser.add_argument("--target-model-update-freq", type=int, default=10000, help="how often (in steps) to update the target model.  Note nature paper says this is in 'number of parameter updates' but their code says steps. see tinyurl.com/hokp4y8")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
@@ -77,7 +77,7 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
 
                 if environment.getStepNumber() > args.observation_steps and environment.getEpisodeStepNumber() % 4 == 0:
                     batch = replayMemory.drawBatch(32)
-                    dqn.train(batch)
+                    dqn.train(batch, environment.getStepNumber())
         
             if time.time() - lastLogTime > 60:
                 print('  ...frame %d' % environment.getEpisodeFrameNumber())
