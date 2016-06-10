@@ -18,8 +18,9 @@ A publicly viewable google spreadsheet has [results](https://docs.google.com/spr
 
 1. Get Python and Tensorflow running, preferably on a GPU (see notes on [AWS setup](https://github.com/gtoubassi/dqn-atari/wiki/Setting-up-TensorFlow-on-AWS-GPU)).
 2. Install the arcade learning environment (see [wiki](https://github.com/gtoubassi/dqn-atari/wiki/Installing-ALE))
-3. Download a game rom, and name it properly like space_invaders.bin (all lower case ending in bin -- the names must match for ALE).
-4. Get the repo:
+3. Install dqn-atari specific dependencies, currently just ``sudo pip install blosc``
+4. Download a game rom, and name it properly like space_invaders.bin (all lower case ending in bin -- the names must match for ALE).
+5. Get the repo:
 
         git clone https://github.com/gtoubassi/dqn-atari.git
 
