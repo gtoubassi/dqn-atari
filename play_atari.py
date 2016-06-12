@@ -24,7 +24,6 @@ parser.add_argument("--observation-steps", type=int, default=50000, help="train 
 parser.add_argument("--learning-rate", type=float, default=0.00025, help="learning rate (step size for optimization algo)")
 parser.add_argument("--target-model-update-freq", type=int, default=10000, help="how often (in steps) to update the target model.  Note nature paper says this is in 'number of parameter updates' but their code says steps. see tinyurl.com/hokp4y8")
 parser.add_argument("--model", help="tensorflow model checkpoint file to initialize from")
-parser.add_argument("--random-starts", type=int, default=30, help="While training, repeat action 0 for this many steps at the start of a game")
 parser.add_argument("rom", help="rom file to run")
 args = parser.parse_args()
 
@@ -46,18 +45,14 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
     isTraining = True if evalWithEpsilon is None else False
     startGameNumber = environment.getGameNumber()
     epochTotalScore = 0
-    
+
     while environment.getStepNumber() - stepStart < minEpochSteps:
     
         startTime = lastLogTime = time.time()
         stateReward = 0
         state = None
-        isTerminal = 0
         
-        if isTraining and args.random_starts > 0:
-            environment.nextRandomGame(args.random_starts)
-
-        while not (environment.isGameOver() or (isTraining and isTerminal)):
+        while not environment.isGameOver():
       
             # Choose next action
             if evalWithEpsilon is None:
