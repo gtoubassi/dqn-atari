@@ -155,7 +155,8 @@ class DeepQNetwork:
     def inference(self, screens):
         y = self.sess.run([self.y], {self.x: screens})
         q_values = np.squeeze(y)
-        return np.argmax(q_values)
+        # This is basically np.argmax(q_values) but with random selection for tiebreaking
+        return np.random.choice(np.where(q_values == np.max(q_values))[0])
         
     def train(self, batch, stepNumber):
 
