@@ -40,12 +40,14 @@ environment = AtariEnvironment(args, baseOutputDir)
 dqn = dqn.DeepQNetwork(environment.getNumActions(), baseOutputDir, args)
 
 replayMemory = replay.ReplayMemory(args)
+episodeCount = 0
 
 def runEpoch(minEpochSteps, evalWithEpsilon=None):
+    global episodeCount
     stepStart = environment.getStepNumber()
     isTraining = True if evalWithEpsilon is None else False
-    startGameNumber = environment.getGameNumber()
     epochTotalScore = 0
+    startEpisodeCount = episodeCount
     
     while environment.getStepNumber() - stepStart < minEpochSteps:
     
@@ -53,19 +55,22 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
         stateReward = 0
         state = None
         isTerminal = 0
+        episodeScore = 0
         
         if isTraining and args.random_starts > 0:
             environment.nextRandomGame(args.random_starts)
+        else:
+            environment.newGame()
 
-        while not (environment.isGameOver() or (isTraining and isTerminal)):
+        while not isTerminal:
       
             # Choose next action
             if evalWithEpsilon is None:
-                epsilon = max(.1, 1.0 - 0.9 * environment.getStepNumber() / 1e6)
+                epsilon = .1 + max(0, .9 * (1e6 - max(0, environment.getStepNumber() - args.observation_steps))/1e6)
             else:
                 epsilon = evalWithEpsilon
 
-            if state is None or random.random() > (1 - epsilon):
+            if state is None or random.random() < epsilon:
                 action = random.randrange(environment.getNumActions())
             else:
                 screens = np.reshape(state.getScreens(), (1, 84, 84, 4))
@@ -73,7 +78,8 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
 
             # Make the move
             oldState = state
-            reward, state, isTerminal = environment.step(action)
+            reward, state, isTerminal = environment.step(action, isTraining)
+            episodeScore += reward
             
             # Record experience in replay memory and train
             if isTraining and oldState is not None:
@@ -92,14 +98,14 @@ def runEpoch(minEpochSteps, evalWithEpsilon=None):
                 state = None
 
         episodeTime = time.time() - startTime
+        episodeCount += 1
         print('%s %d ended with score: %d (%d frames in %fs for %d fps)' %
-            ('Episode' if isTraining else 'Eval', environment.getGameNumber(), environment.getGameScore(),
+            ('Episode' if isTraining else 'Eval', episodeCount, episodeScore,
             environment.getEpisodeFrameNumber(), episodeTime, environment.getEpisodeFrameNumber() / episodeTime))
-        epochTotalScore += environment.getGameScore()
-        environment.resetGame()
+        epochTotalScore += episodeScore
     
     # return the average score
-    return epochTotalScore / (environment.getGameNumber() - startGameNumber)
+    return epochTotalScore / (episodeCount - startEpisodeCount)
 
 
 while True:

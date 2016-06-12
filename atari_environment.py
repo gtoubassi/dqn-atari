@@ -17,7 +17,7 @@ class AtariEnvironment:
         self.outputDir = outputDir
         self.screenCaptureFrequency = args.screen_capture_freq
 
-        if 'loadRom' in dir(ALEInterface):
+        if 'loadROM' in dir(ALEInterface):
             print('Running with ALE')
             self.ale = ALEInterface()
             self.ale.loadROM(args.rom)
@@ -31,8 +31,8 @@ class AtariEnvironment:
         self.ale.setFloat(b'repeat_action_probability', 0.0)
 
         self.actionSet = self.ale.getMinimalActionSet()
-        self.gameNumber = 0
         self.stepNumber = 0
+        self.resetCount = 0
         self.resetGame()
 
     def getNumActions(self):
@@ -40,9 +40,6 @@ class AtariEnvironment:
 
     def getState(self):
         return self.state
-    
-    def getGameNumber(self):
-        return self.gameNumber
     
     def getFrameNumber(self):
         return self.ale.getFrameNumber()
@@ -56,27 +53,28 @@ class AtariEnvironment:
     def getStepNumber(self):
         return self.stepNumber
     
-    def getGameScore(self):
-        return self.gameScore
-
-    def isGameOver(self):
-        return self.ale.game_over()
-        
-    def nextRandomGame(self, maxRandomSteps):
-        while not self._nextRandomGame(maxRandomSteps):
-            print('Died during random game generation!')
-
-    def _nextRandomGame(self, maxRandomSteps):
-        k = random.randint(1, maxRandomSteps)
+    def newGame(self):
+        # Add stochasticity
+        while not self.ale.game_over():
+            self.ale.act(random.choice(self.actionSet))
+        # DeepMind code does a single step here, but that should be the moral equiv
+        # of our reset since underneath a step after moving to end of game does
+        # a reset
         self.resetGame()
-        lives = self.ale.lives()
+
+    def nextRandomGame(self, maxRandomSteps):
+        self.newGame()
+        k = random.randint(1, maxRandomSteps)
         for i in range(k):
             self.ale.act(self.actionSet[0])
-            if self.ale.lives() < lives or self.ale.game_over():
-                return False
-        return True
+            if self.ale.game_over():
+                print('Game over during nextRandomGame on step %d of %d' % (i, k))
+        self._resetState()
 
-    def step(self, action):
+    def step(self, action, isTraining):
+        if self.ale.game_over():
+            self.resetGame()
+        
         previousLives = self.ale.lives()
         reward = 0
         isTerminal = 0
@@ -90,26 +88,26 @@ class AtariEnvironment:
     
             # Detect end of episode, I don't think I'm handling this right in terms
             # of the overall game loop (??)
-            if self.ale.lives() < previousLives or self.ale.game_over():
+            if self.ale.game_over() or (isTraining and self.ale.lives() < previousLives):
                 isTerminal = 1
                 break
 
-            if self.gameNumber % self.screenCaptureFrequency == 0:
+            if not isTraining and self.resetCount % self.screenCaptureFrequency == 0:
                 dir = self.outputDir + '/screen_cap/game-%06d' % (self.gameNumber)
                 if not os.path.isdir(dir):
                     os.makedirs(dir)
                 self.ale.saveScreenPNG(dir + '/frame-%06d.png' % (self.getEpisodeFrameNumber()))
 
-
         maxedScreen = np.maximum(screenRGB, prevScreenRGB)
         self.state = self.state.stateByAddingScreen(maxedScreen, self.ale.getFrameNumber())
-        self.gameScore += reward
         return reward, self.state, isTerminal
 
     def resetGame(self):
-        if self.ale.game_over():
-            self.gameNumber += 1
         self.ale.reset_game()
-        self.state = State().stateByAddingScreen(self.ale.getScreenRGB(), self.ale.getFrameNumber())
-        self.gameScore = 0
+        self.resetCount += 1
+        self._resetState()
         self.episodeStepNumber = 0 # environment steps vs ALE frames.  Will probably be 4*frame number
+    
+    def _resetState(self):
+        self.state = State().stateByAddingScreen(self.ale.getScreenRGB(), self.ale.getFrameNumber())
+
