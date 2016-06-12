@@ -62,7 +62,7 @@ class AtariEnvironment:
     def isGameOver(self):
         return self.ale.game_over()
         
-    def nextRandomGame(self, maxRandomSteps):
+    def _nextRandomGame(self, maxRandomSteps):
         while not self._nextRandomGame(maxRandomSteps):
             print('Died during random game generation!')
 
