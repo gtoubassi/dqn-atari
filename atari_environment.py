@@ -16,15 +16,19 @@ class AtariEnvironment:
         
         self.outputDir = outputDir
         self.screenCaptureFrequency = args.screen_capture_freq
-        
-        self.ale = ALEInterface()
+
+        if 'loadRom' in dir(ALEInterface):
+            print('Running with ALE')
+            self.ale = ALEInterface()
+            self.ale.loadROM(args.rom)
+        else:
+            print('Running with xitari')
+            self.ale = ALEInterface(args.rom)
+
         self.ale.setInt(b'random_seed', 123456)
         random.seed(123456)
         # Fix https://groups.google.com/forum/#!topic/deep-q-learning/p4FAIaabwlo
         self.ale.setFloat(b'repeat_action_probability', 0.0)
-
-        # Load the ROM file
-        self.ale.loadROM(args.rom)
 
         self.actionSet = self.ale.getMinimalActionSet()
         self.gameNumber = 0
@@ -59,7 +63,7 @@ class AtariEnvironment:
         return self.ale.game_over()
         
     def _nextRandomGame(self, maxRandomSteps):
-        while not _nextRandomGame(maxRandomSteps):
+        while not self._nextRandomGame(maxRandomSteps):
             print('Died during random game generation!')
 
     def _nextRandomGame(self, maxRandomSteps):
