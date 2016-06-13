@@ -93,7 +93,7 @@ class AtariEnvironment:
                 break
 
             if not isTraining and self.resetCount % self.screenCaptureFrequency == 0:
-                dir = self.outputDir + '/screen_cap/game-%06d' % (self.gameNumber)
+                dir = self.outputDir + '/screen_cap/game-%06d' % (self.resetCount)
                 if not os.path.isdir(dir):
                     os.makedirs(dir)
                 self.ale.saveScreenPNG(dir + '/frame-%06d.png' % (self.getEpisodeFrameNumber()))
