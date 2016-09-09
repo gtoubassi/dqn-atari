@@ -1,5 +1,7 @@
 # DQN Atari
 
+[![Click to play video](https://img.youtube.com/vi/DqzSrEuA2Jw/1.jpg)](https://www.youtube.com/watch?v=DqzSrEuA2Jw)
+
 This repo represents my attempt to reproduce the DeepMind Atari playing agent described in the recent [Nature paper](http://home.uchicago.edu/~arij/journalclub/papers/2015_Mnih_et_al.pdf).
 
 While the DeepMind implementation is built in [lua with torch7](https://github.com/kuz/DeepMind-Atari-Deep-Q-Learner), this implementation uses [TensorFlow](http://tensorflow.org).  Like DeepMind, it also depends on the [Arcade Learning Environment](http://www.arcadelearningenvironment.org/) (technically I believe DeepMind uses their [Xitari](https://github.com/deepmind/xitari) fork of ALE).
