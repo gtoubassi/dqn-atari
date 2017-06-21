@@ -39,18 +39,18 @@ class DeepQNetwork:
         
         self.sess = tf.Session()
         
-        assert (len(tf.all_variables()) == 0),"Expected zero variables"
+        assert (len(tf.global_variables()) == 0),"Expected zero variables"
         self.x, self.y = self.buildNetwork('policy', True, numActions)
         assert (len(tf.trainable_variables()) == 10),"Expected 10 trainable_variables"
-        assert (len(tf.all_variables()) == 10),"Expected 10 total variables"
+        assert (len(tf.global_variables()) == 10),"Expected 10 total variables"
         self.x_target, self.y_target = self.buildNetwork('target', False, numActions)
         assert (len(tf.trainable_variables()) == 10),"Expected 10 trainable_variables"
-        assert (len(tf.all_variables()) == 20),"Expected 20 total variables"
+        assert (len(tf.global_variables()) == 20),"Expected 20 total variables"
 
         # build the variable copy ops
         self.update_target = []
         trainable_variables = tf.trainable_variables()
-        all_variables = tf.all_variables()
+        all_variables = tf.global_variables()
         for i in range(0, len(trainable_variables)):
 			self.update_target.append(all_variables[len(trainable_variables) + i].assign(trainable_variables[i]))
 
@@ -59,7 +59,7 @@ class DeepQNetwork:
         self.y_ = tf.placeholder(tf.float32, [None])
         print('y_ %s' % (self.y_.get_shape()))
 
-        self.y_a = tf.reduce_sum(tf.mul(self.y, self.a), reduction_indices=1)
+        self.y_a = tf.reduce_sum(tf.multiply(self.y, self.a), reduction_indices=1)
         print('y_a %s' % (self.y_a.get_shape()))
 
         difference = tf.abs(self.y_a - self.y_)
@@ -79,11 +79,11 @@ class DeepQNetwork:
         self.saver = tf.train.Saver(max_to_keep=25)
 
         # Initialize variables
-        self.sess.run(tf.initialize_all_variables())
+        self.sess.run(tf.global_variables_initializer())
         self.sess.run(self.update_target) # is this necessary?
 
 
-        self.summary_writer = tf.train.SummaryWriter(self.baseDir + '/tensorboard', self.sess.graph_def)
+        self.summary_writer = tf.summary.FileWriter(self.baseDir + '/tensorboard', self.sess.graph)
 
         if args.model is not None:
             print('Loading from model file %s' % (args.model))
